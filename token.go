@@ -12,10 +12,11 @@ const TTLParen = "LPAREN"
 const TTRParen = "RPAREN"
 
 type Token struct {
-	Type, Value string
+	Type string
+	Value interface{}
 }
 
-func NewToken(t, v string) *Token {
+func NewToken(t string, v interface{}) *Token {
 	token := &Token{
 		Type: t,
 		Value: v,

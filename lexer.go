@@ -1,6 +1,9 @@
 package main
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 const Digits = "0123456789"
 
@@ -44,9 +47,17 @@ func (l *Lexer) MakeNumber() *Token {
 		l.Advance()
 	}
 	if hasDot {
-		return NewToken(TTFloat, numStr)
+		val, err := strconv.ParseFloat(numStr, 64)
+		if err != nil {
+			panic(err)
+		}
+		return NewToken(TTFloat, val)
 	}
-	return NewToken(TTInt, numStr)
+	val, err := strconv.ParseInt(numStr, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+	return NewToken(TTInt, val)
 }
 
 func (l *Lexer) MakeTokens() ([]*Token, *Error) {
