@@ -8,15 +8,16 @@ import (
 const Digits = "0123456789"
 
 type Lexer struct {
-	Text string
-	Pos int
-	CurrChar string
+	CurrChar, Text,	FileName,	FileText string
+	Pos *Position
 }
 
-func NewLexer(text string) *Lexer {
+func NewLexer(txt, fn, ftxt string) *Lexer {
 	lexer := &Lexer{
-		Text: text,
-		Pos: -1,
+		Text: txt,
+		FileName: fn,
+		FileText: ftxt,
+		Pos: NewPosition(-1, 1, 0, fn, ftxt),
 	}
 
 	lexer.Advance()
@@ -25,9 +26,9 @@ func NewLexer(text string) *Lexer {
 }
 
 func (l *Lexer) Advance() {
-	l.Pos += 1
-	if len(l.Text) > l.Pos {
-		l.CurrChar = l.Text[l.Pos:l.Pos + 1]
+	l.Pos.Advance(l.CurrChar)
+	if len(l.Text) > l.Pos.Index {
+		l.CurrChar = l.Text[l.Pos.Index:l.Pos.Index + 1]
 	} else {
 		l.CurrChar = ""
 	}
@@ -86,7 +87,7 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 		} else if l.CurrChar == ")" {
 			addToken(NewToken(TTRParen, ")"))
 		} else {
-			return []*Token{}, NewIlligalCharError("'" + l.CurrChar + "'")
+			return []*Token{}, NewIlligalCharError("'" + l.CurrChar + "'", l.Pos)
 		}
 	}
 

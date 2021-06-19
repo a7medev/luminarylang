@@ -15,11 +15,11 @@ func getInput(prompt string, r *bufio.Reader) (string, error) {
 }
 
 func run(t string) {
-	lexer := NewLexer(t)
+	lexer := NewLexer(t, "<stdin>", "")
 	tokens, err := lexer.MakeTokens()
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err.ToString())
 	}
 
 	for _, v := range tokens {
