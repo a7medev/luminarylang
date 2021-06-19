@@ -75,17 +75,17 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 		} else if strings.Contains(Digits, l.CurrChar) {
 			addToken(l.MakeNumber())
 		} else if l.CurrChar == "+" {
-			addToken(NewToken(TTPlus, "+"))
+			addToken(NewToken(TTOp, "+"))
 		} else if l.CurrChar == "-" {
-			addToken(NewToken(TTMinus, "-"))
+			addToken(NewToken(TTOp, "-"))
 		} else if l.CurrChar == "*" {
-			addToken(NewToken(TTMul, "*"))
+			addToken(NewToken(TTOp, "*"))
 		} else if l.CurrChar == "/" {
-			addToken(NewToken(TTDiv, "/"))
+			addToken(NewToken(TTOp, "/"))
 		} else if l.CurrChar == "(" {
-			addToken(NewToken(TTLParen, "("))
+			addToken(NewToken(TTParen, "("))
 		} else if l.CurrChar == ")" {
-			addToken(NewToken(TTRParen, ")"))
+			addToken(NewToken(TTParen, ")"))
 		} else {
 			return []*Token{}, NewIlligalCharError("'" + l.CurrChar + "'", l.Pos)
 		}

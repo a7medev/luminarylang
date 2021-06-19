@@ -4,12 +4,8 @@ import "fmt"
 
 const TTInt    = "INT"
 const TTFloat  = "FLOAT"
-const TTPlus   = "PLUS"
-const TTMinus  = "MINUS"
-const TTMul    = "MUL"
-const TTDiv    = "DIV"
-const TTLParen = "LPAREN"
-const TTRParen = "RPAREN"
+const TTOp     = "OP"
+const TTParen  = "PAREN"
 
 type Token struct {
 	Type string
