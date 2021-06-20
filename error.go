@@ -16,7 +16,7 @@ func NewError(n, d string, p *Position) *Error {
 	return e
 }
 
-func (e *Error) ToString() string {
+func (e *Error) String() string {
 	return fmt.Sprintf(
 		"%vError(%v): %v.\nFile: %v - Line: %v - Col: %v",
 		"\033[31m",

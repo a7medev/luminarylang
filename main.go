@@ -19,7 +19,7 @@ func run(t string) {
 	tokens, err := lexer.MakeTokens()
 
 	if err != nil {
-		fmt.Println(err.ToString())
+		fmt.Println(err)
 		return
 	}
 
@@ -27,7 +27,7 @@ func run(t string) {
 	ast := parser.Parse()
 
 	if ast.Error != nil {
-		fmt.Println(ast.Error.ToString())
+		fmt.Println(ast.Error)
 		return
 	}
 	

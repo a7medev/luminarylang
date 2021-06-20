@@ -24,6 +24,6 @@ func NewToken(t string, v interface{}, p *Position) *Token {
 	return token
 }
 
-func (t *Token) ToString() string {
+func (t *Token) String() string {
 	return fmt.Sprintf("[%v: %v]", t.Type, t.Value)
 }
