@@ -66,7 +66,10 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 
 	addToken  := func(t *Token) {
 		tokens = append(tokens, t)
-		l.Advance()
+		// don't advance if token is a number cuz the MakeNumber method already advances
+		if t.Type != TTInt && t.Type != TTFloat {
+			l.Advance()
+		}
 	}
 
 	for l.CurrChar != "" {
