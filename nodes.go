@@ -24,3 +24,17 @@ func NewBinNode(l, r interface{}, o *Token) *BinOpNode {
 
 	return b
 }
+
+type UnaryOpNode struct {
+	Op *Token
+	Node interface{}
+}
+
+func NewUnaryOpNode(o *Token, n interface{}) *UnaryOpNode {
+	u := &UnaryOpNode{
+		Op: o,
+		Node: n,
+	}
+
+	return u
+}
