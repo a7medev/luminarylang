@@ -2,8 +2,7 @@ package main
 
 import "fmt"
 
-const TTInt   = "INT"
-const TTFloat = "FLOAT"
+const TTNum   = "NUM"
 const TTOp    = "OP"
 const TTParen = "PAREN"
 const TTEOF   = "EOF"

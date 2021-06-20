@@ -47,18 +47,12 @@ func (l *Lexer) MakeNumber() *Token {
 		numStr += l.CurrChar
 		l.Advance()
 	}
-	if hasDot {
-		val, err := strconv.ParseFloat(numStr, 64)
-		if err != nil {
-			panic(err)
-		}
-		return NewToken(TTFloat, val, l.Pos)
-	}
-	val, err := strconv.ParseInt(numStr, 10, 32)
+
+	val, err := strconv.ParseFloat(numStr, 64)
 	if err != nil {
 		panic(err)
 	}
-	return NewToken(TTInt, val, l.Pos)
+	return NewToken(TTNum, val, l.Pos)
 }
 
 func (l *Lexer) MakeTokens() ([]*Token, *Error) {
@@ -67,7 +61,7 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 	addToken  := func(t *Token) {
 		tokens = append(tokens, t)
 		// don't advance if token is a number cuz the MakeNumber method already advances
-		if t.Type != TTInt && t.Type != TTFloat {
+		if t.Type != TTNum {
 			l.Advance()
 		}
 	}

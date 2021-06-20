@@ -33,7 +33,8 @@ func run(t string) {
 
 	interp := NewInterpretor()
 
-	interp.Visit(ast.Node)
+	res := interp.Visit(ast.Node)
+	fmt.Println(res)
 }
 
 func main() {

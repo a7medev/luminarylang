@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type Interpretor struct {}
 
 func NewInterpretor() *Interpretor {
@@ -9,32 +7,49 @@ func NewInterpretor() *Interpretor {
 	return i
 }
 
-func (i *Interpretor) Visit(n interface{}) {
+func (i *Interpretor) Visit(n interface{}) *Number {
 	if num, ok := n.(*NumberNode); ok {
-		i.VisitNumberNode(num)
+		return i.VisitNumberNode(num)
 	} else if bin, ok := n.(*BinOpNode); ok {
-		i.VisitBinOpNode(bin)
+		return i.VisitBinOpNode(bin)
 	} else if unary, ok := n.(*UnaryOpNode); ok {
-		i.VisitUnaryOpNode(unary)
+		return i.VisitUnaryOpNode(unary)
 	} else {
 		panic("no visit method for this node")
 	}
 }
 
-func (i *Interpretor) VisitNumberNode(n *NumberNode) {
-	fmt.Println("Visiting NumberNode", n)
-
+func (i *Interpretor) VisitNumberNode(n *NumberNode) *Number {
+	if val, ok := n.Token.Value.(float64); ok {
+		return NewNumber(val).SetPos(n.Token.Pos)
+	} else {
+		panic("Invalid number node")
+	}
 }
 
-func (i *Interpretor) VisitBinOpNode(b *BinOpNode) {
-	fmt.Println("Visiting BinOpNode", b)
-	i.Visit(b.Right)
-	i.Visit(b.Left)
+func (i *Interpretor) VisitBinOpNode(b *BinOpNode) *Number {
+	l := i.Visit(b.Right)
+	r := i.Visit(b.Left)
 
+	switch b.Op.Value {
+	case "+":
+		return r.AddTo(l)
+	case "-":
+		return r.SubBy(l)
+	case "*":
+		return r.MulBy(l)
+	case "/":
+		return r.DivBy(l)
+	default:
+		return nil
+	}
 }
 
-func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode) {
-	fmt.Println("Visiting UnaryOpNode", u)
-	i.Visit(u.Node)
-
+func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode) *Number {
+	n := i.Visit(u.Node)
+	if u.Op.Value == "-" {
+		return n.MulBy(NewNumber(-1))
+	} else {
+		return n
+	}
 }

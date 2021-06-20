@@ -88,7 +88,7 @@ func (p *Parser) Factor() *ParseResult {
 		} else {
 			return pr.Failure(NewInvalidSyntaxError("Expected ')'", p.CurrToken.Pos))
 		}
-	} else if t.Type == TTInt || t.Type == TTFloat {
+	} else if t.Type == TTNum {
 		pr.Register(p.Advance())
 		return pr.Success(NewNumberNode(t))
 	}
