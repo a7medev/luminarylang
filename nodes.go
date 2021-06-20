@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type NumberNode struct {
 	Token *Token
 }
@@ -7,6 +9,10 @@ type NumberNode struct {
 func NewNumberNode(t *Token) *NumberNode {
 	n := &NumberNode{Token: t}
 	return n
+}
+
+func (n *NumberNode) String() string {
+	return n.Token.String()
 }
 
 type BinOpNode struct {
@@ -23,6 +29,10 @@ func NewBinNode(l, r interface{}, o *Token) *BinOpNode {
 	}
 
 	return b
+}
+
+func (b *BinOpNode) String() string {
+	return fmt.Sprintf("(%v, %v, %v)", b.Left, b.Op, b.Right)
 }
 
 type UnaryOpNode struct {
