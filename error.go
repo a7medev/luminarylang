@@ -18,7 +18,8 @@ func NewError(n, d string, p *Position) *Error {
 
 func (e *Error) ToString() string {
 	return fmt.Sprintf(
-		"Error(%v): %v.\nFile: %v - Line: %v - Col: %v",
+		"%vError(%v): %v.\nFile: %v - Line: %v - Col: %v",
+		"\033[31m",
 		e.Name,
 		e.Details,
 		e.Pos.FileName,
