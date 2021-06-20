@@ -40,6 +40,8 @@ func (i *Interpretor) VisitBinOpNode(b *BinOpNode) *Number {
 		return r.MulBy(l)
 	case "/":
 		return r.DivBy(l)
+	case "%":
+		return r.Mod(l)
 	default:
 		return nil
 	}

@@ -96,14 +96,14 @@ func (p *Parser) Factor() *ParseResult {
 }
 
 func (p *Parser) Term() *ParseResult {
-	return p.BinOp(p.Factor, [2]string{"*", "/"})
+	return p.BinOp(p.Factor, []string{"*", "/", "%"})
 }
 
 func (p *Parser) Exp() *ParseResult {
-	return p.BinOp(p.Term, [2]string{"+", "-"})
+	return p.BinOp(p.Term, []string{"+", "-"})
 }
 
-func (p *Parser) BinOp(f func() *ParseResult, ops [2]string) *ParseResult {
+func (p *Parser) BinOp(f func() *ParseResult, ops []string) *ParseResult {
 	pr := NewParseResult()
   l := pr.Register(f())
 
@@ -111,7 +111,7 @@ func (p *Parser) BinOp(f func() *ParseResult, ops [2]string) *ParseResult {
 		return pr
 	}
 
-	for p.CurrToken.Type == TTOp && (p.CurrToken.Value == ops[0] || p.CurrToken.Value == ops[1]) {
+	for p.CurrToken.Type == TTOp && Contains(ops, p.CurrToken.Value) {
 		op := p.CurrToken
 		pr.Register(p.Advance())
 		r := pr.Register(f())

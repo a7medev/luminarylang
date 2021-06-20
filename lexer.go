@@ -79,6 +79,8 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 			addToken(NewToken(TTOp, "*", l.Pos))
 		} else if l.CurrChar == "/" {
 			addToken(NewToken(TTOp, "/", l.Pos))
+		} else if l.CurrChar == "%" {
+			addToken(NewToken(TTOp, "%", l.Pos))
 		} else if l.CurrChar == "(" {
 			addToken(NewToken(TTParen, "(", l.Pos))
 		} else if l.CurrChar == ")" {

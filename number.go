@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 type Number struct {
 	Value float64
@@ -47,6 +50,14 @@ func (n *Number) DivBy(other interface{}) *Number {
 	switch o := other.(type) {
 	case *Number:
 		return NewNumber(n.Value / o.Value)
+	}
+	return nil
+}
+
+func (n *Number) Mod(other interface{}) *Number {
+	switch o := other.(type) {
+	case *Number:
+		return NewNumber(math.Mod(n.Value, o.Value))
 	}
 	return nil
 }
