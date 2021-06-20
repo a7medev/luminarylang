@@ -35,3 +35,12 @@ func NewIlligalCharError(d string, p *Position) *Error {
 	}
 	return e
 }
+
+func NewInvalidSyntaxError(d string, p *Position) *Error {
+	e := &Error{
+		Name: "Invalid Syntax",
+		Details: d,
+		Pos: p,
+	}
+	return e
+}
