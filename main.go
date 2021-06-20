@@ -30,8 +30,10 @@ func run(t string) {
 		fmt.Println(ast.Error)
 		return
 	}
-	
-	fmt.Println(ast.Node)
+
+	interp := NewInterpretor()
+
+	interp.Visit(ast.Node)
 }
 
 func main() {
