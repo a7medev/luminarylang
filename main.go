@@ -19,12 +19,11 @@ func run(t string) {
 	tokens, err := lexer.MakeTokens()
 
 	if err != nil {
-		fmt.Println(err.ToString())
+		panic(err.ToString())
 	}
 
-	for _, v := range tokens {
-		fmt.Println(v.ToString())
-	}
+	parser := NewParser(tokens, -1)
+	parser.Parse()
 }
 
 func main() {
