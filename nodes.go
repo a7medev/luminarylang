@@ -40,6 +40,10 @@ type UnaryOpNode struct {
 	Node interface{}
 }
 
+func (u *UnaryOpNode) String() string {
+	return fmt.Sprintf("(%v, %v)", u.Op, u.Node)
+}
+
 func NewUnaryOpNode(o *Token, n interface{}) *UnaryOpNode {
 	u := &UnaryOpNode{
 		Op: o,

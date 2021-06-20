@@ -56,7 +56,7 @@ func (p *Parser) Advance() *Token {
 }
 
 func (p *Parser) Parse() *ParseResult {
-	pr := p.Expr()
+	pr := p.Exp()
 
 	if pr.Error == nil && p.CurrToken.Type != TTEOF {
 		return pr.Failure(NewInvalidSyntaxError("Expected '+', '-', '*' or '/'", p.CurrToken.Pos))
@@ -68,7 +68,27 @@ func (p *Parser) Parse() *ParseResult {
 func (p *Parser) Factor() *ParseResult {
 	pr := NewParseResult()
 	t := p.CurrToken
-	if t.Type == TTInt || t.Type == TTFloat {
+
+	if t.Type == TTOp && t.Value == "+" || t.Value == "-" {
+		pr.Register(p.Advance())
+		fc := pr.Register(p.Factor())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(NewUnaryOpNode(t, fc))
+	} else if t.Type == TTParen && t.Value == "(" {
+		pr.Register(p.Advance())
+		exp := pr.Register(p.Exp())
+		if pr.Error != nil {
+			return pr
+		}
+		if p.CurrToken.Type == TTParen && p.CurrToken.Value == ")" {
+			pr.Register(p.Advance())
+			return pr.Success(exp)
+		} else {
+			return pr.Failure(NewInvalidSyntaxError("Expected ')'", p.CurrToken.Pos))
+		}
+	} else if t.Type == TTInt || t.Type == TTFloat {
 		pr.Register(p.Advance())
 		return pr.Success(NewNumberNode(t))
 	}
@@ -79,7 +99,7 @@ func (p *Parser) Term() *ParseResult {
 	return p.BinOp(p.Factor, [2]string{"*", "/"})
 }
 
-func (p *Parser) Expr() *ParseResult {
+func (p *Parser) Exp() *ParseResult {
 	return p.BinOp(p.Term, [2]string{"+", "-"})
 }
 
