@@ -52,13 +52,13 @@ func (l *Lexer) MakeNumber() *Token {
 		if err != nil {
 			panic(err)
 		}
-		return NewToken(TTFloat, val)
+		return NewToken(TTFloat, val, l.Pos)
 	}
 	val, err := strconv.ParseInt(numStr, 10, 32)
 	if err != nil {
 		panic(err)
 	}
-	return NewToken(TTInt, val)
+	return NewToken(TTInt, val, l.Pos)
 }
 
 func (l *Lexer) MakeTokens() ([]*Token, *Error) {
@@ -75,21 +75,23 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 		} else if strings.Contains(Digits, l.CurrChar) {
 			addToken(l.MakeNumber())
 		} else if l.CurrChar == "+" {
-			addToken(NewToken(TTOp, "+"))
+			addToken(NewToken(TTOp, "+", l.Pos))
 		} else if l.CurrChar == "-" {
-			addToken(NewToken(TTOp, "-"))
+			addToken(NewToken(TTOp, "-", l.Pos))
 		} else if l.CurrChar == "*" {
-			addToken(NewToken(TTOp, "*"))
+			addToken(NewToken(TTOp, "*", l.Pos))
 		} else if l.CurrChar == "/" {
-			addToken(NewToken(TTOp, "/"))
+			addToken(NewToken(TTOp, "/", l.Pos))
 		} else if l.CurrChar == "(" {
-			addToken(NewToken(TTParen, "("))
+			addToken(NewToken(TTParen, "(", l.Pos))
 		} else if l.CurrChar == ")" {
-			addToken(NewToken(TTParen, ")"))
+			addToken(NewToken(TTParen, ")", l.Pos))
 		} else {
 			return []*Token{}, NewIlligalCharError("'" + l.CurrChar + "'", l.Pos)
 		}
 	}
+
+	tokens = append(tokens, NewToken(TTEOF, TTEOF, l.Pos))
 
 	return tokens, nil
 }

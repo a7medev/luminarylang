@@ -19,11 +19,19 @@ func run(t string) {
 	tokens, err := lexer.MakeTokens()
 
 	if err != nil {
-		panic(err.ToString())
+		fmt.Println(err.ToString())
+		return
 	}
 
 	parser := NewParser(tokens, -1)
-	parser.Parse()
+	ast := parser.Parse()
+
+	if ast.Error != nil {
+		fmt.Println(ast.Error.ToString())
+		return
+	}
+	
+	fmt.Println(ast.Node)
 }
 
 func main() {
@@ -32,7 +40,8 @@ func main() {
 	for {
 		text, err := getInput("\033[33mluminary %\033[37m ", reader)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			break
 		}
 		if (text == "exit") {
 			break
