@@ -61,3 +61,11 @@ func (n *Number) Mod(other interface{}) *Number {
 	}
 	return nil
 }
+
+func (n *Number) Pow(other interface{}) *Number {
+	switch o := other.(type) {
+	case *Number:
+		return NewNumber(math.Pow(n.Value, o.Value))
+	}
+	return nil
+}

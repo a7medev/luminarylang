@@ -59,7 +59,7 @@ func (p *Parser) Parse() *ParseResult {
 	pr := p.Exp()
 
 	if pr.Error == nil && p.CurrToken.Type != TTEOF {
-		return pr.Failure(NewInvalidSyntaxError("Expected '+', '-', '*' or '/'", p.CurrToken.Pos))
+		return pr.Failure(NewInvalidSyntaxError("Expected '+', '-', '*', '/', '%' or '^'", p.CurrToken.Pos))
 	}
 
 	return pr
@@ -96,7 +96,7 @@ func (p *Parser) Factor() *ParseResult {
 }
 
 func (p *Parser) Term() *ParseResult {
-	return p.BinOp(p.Factor, []string{"*", "/", "%"})
+	return p.BinOp(p.Factor, []string{"^", "*", "/", "%"})
 }
 
 func (p *Parser) Exp() *ParseResult {
