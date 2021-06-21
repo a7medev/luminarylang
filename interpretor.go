@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type Interpretor struct {}
 
@@ -17,7 +20,13 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) interface{} {
 	} else if unary, ok := n.(*UnaryOpNode); ok {
 		return i.VisitUnaryOpNode(unary, ctx)
 	} else if access, ok := n.(*VarAccessNode); ok {
-		return i.VisitVarAccessNode(access, ctx)
+		val, err := i.VisitVarAccessNode(access, ctx)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(0)
+			return nil
+		}
+		return val
 	} else if assign, ok := n.(*VarAssignNode); ok {
 		return i.VisitVarAssignNode(assign, ctx)
 	} else {
@@ -80,6 +89,38 @@ func (i *Interpretor) VisitBinOpNode(b *BinOpNode, ctx *Context) *Number {
 			return nil
 		}
 		return res
+	case "==":
+		return r.IsEqualTo(l)
+	case "!=":
+		return r.IsNotEqualTo(l)
+	case ">":
+		res, err := r.IsGreaterThan(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
+	case ">=":
+		res, err := r.IsGreaterThanOrEqual(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
+	case "<":
+		res, err := r.IsLessThan(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
+	case "<=":
+		res, err := r.IsLessThanOrEqual(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	default:
 		return nil
 	}
@@ -104,14 +145,14 @@ func (i *Interpretor) VisitVarAssignNode(va *VarAssignNode, ctx *Context) interf
 	return ctx.SymbolTable.Set(va.NameToken.Value.(string), num)
 }
 
-func (i *Interpretor) VisitVarAccessNode(va *VarAccessNode, ctx *Context) interface{} {
+func (i *Interpretor) VisitVarAccessNode(va *VarAccessNode, ctx *Context) (interface{}, *Error) {
 	name := va.NameToken.Value.(string)
 	val := ctx.SymbolTable.Get(name)
 	if val == nil {
-		return NewRuntimeError(
+		return nil, NewRuntimeError(
 			"undefined variable '" + name + "'",
 			va.NameToken.StartPos,
 			va.NameToken.EndPos)
 	}
-	return val
+	return val, nil
 }

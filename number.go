@@ -83,3 +83,97 @@ func (n *Number) Pow(other interface{}) (*Number, *Error) {
 	}
 	return nil, NewInvalidSyntaxError("Expected a number", n.StartPos, nil)
 }
+
+func (n *Number) IsEqualTo(other interface{}) *Number {
+	if o, ok := other.(*Number); ok {
+		var val float64 = 0
+		if n.Value == o.Value {
+			val = 1
+		}
+		return NewNumber(val)
+	}
+
+	return NewNumber(0)
+}
+
+func (n *Number) IsNotEqualTo(other interface{}) *Number {
+	isEq := n.IsEqualTo(other)
+
+	if isEq.Value == 1 {
+		return NewNumber(0)
+	}
+
+	return NewNumber(1)
+}
+
+func (n *Number) IsGreaterThan(other interface{}) (*Number, *Error) {
+	if o, ok := other.(*Number); ok {
+		var val float64 = 0
+		if n.Value > o.Value {
+			val = 1
+		}
+		return NewNumber(val), nil
+	}
+
+	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
+}
+
+func (n *Number) IsGreaterThanOrEqual(other interface{}) (*Number, *Error) {
+	if o, ok := other.(*Number); ok {
+		var val float64 = 0
+		if n.Value >= o.Value {
+			val = 1
+		}
+		return NewNumber(val), nil
+	}
+
+	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
+}
+
+func (n *Number) IsLessThan(other interface{}) (*Number, *Error) {
+	if o, ok := other.(*Number); ok {
+		var val float64 = 0
+		if n.Value < o.Value {
+			val = 1
+		}
+		return NewNumber(val), nil
+	}
+
+	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
+}
+
+func (n *Number) IsLessThanOrEqual(other interface{}) (*Number, *Error) {
+	if o, ok := other.(*Number); ok {
+		var val float64 = 0
+		if n.Value <= o.Value {
+			val = 1
+		}
+		return NewNumber(val), nil
+	}
+
+	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
+}
+
+func (n *Number) And(other interface{}) (*Number, *Error) {
+	if o, ok := other.(*Number); ok {
+		var val float64 = 0
+		if n.Value >= 1 && o.Value >= 1 {
+			val = 1
+		}
+		return NewNumber(val), nil
+	}
+
+	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
+}
+
+func (n *Number) Or(other interface{}) (*Number, *Error) {
+	if o, ok := other.(*Number); ok {
+		var val float64 = 0
+		if n.Value >= 1 || o.Value >= 1 {
+			val = 1
+		}
+		return NewNumber(val), nil
+	}
+
+	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
+}

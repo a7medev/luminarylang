@@ -9,7 +9,7 @@ const Digits = "0123456789"
 const Letters = "abcdefghijklmnopqrstunwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const IdAllowedChars = Letters + Digits + "_"
 
-var Keywords = [1]string{"set"}
+var Keywords = [4]string{"set", "and", "or", "not"}
 
 type Lexer struct {
 	CurrChar, Text,	FileName,	FileText string
@@ -40,6 +40,7 @@ func (l *Lexer) Advance() {
 
 func (l *Lexer) MakeId() *Token {
 	idStr := ""
+	startPos := *l.Pos
 
 	for l.CurrChar != "" && strings.Contains(IdAllowedChars, l.CurrChar) {
 		idStr += l.CurrChar
@@ -47,17 +48,17 @@ func (l *Lexer) MakeId() *Token {
 	}
 
 	endPos := *l.Pos
-	endPos.Index += len(idStr)
-	endPos.Col += len(idStr)
 	if Contains(Keywords, idStr) {
-		return NewToken(TTKeyword, idStr, l.Pos, &endPos)
+		return NewToken(TTKeyword, idStr, &startPos, &endPos)
 	}
-	return NewToken(TTId, idStr, l.Pos, &endPos)
+	return NewToken(TTId, idStr, &startPos, &endPos)
 }
 
 func (l *Lexer) MakeNumber() *Token {
 	numStr := ""
 	hasDot := false
+	startPos := *l.Pos
+
 	for l.CurrChar != "" && strings.Contains(Digits + ".", l.CurrChar) {
 		if l.CurrChar == "." {
 			if hasDot {
@@ -74,17 +75,67 @@ func (l *Lexer) MakeNumber() *Token {
 		panic(err)
 	}
 	endPos := *l.Pos
-	endPos.Col += len(numStr)
-	return NewToken(TTNum, val, l.Pos, &endPos)
+	return NewToken(TTNum, val, &startPos, &endPos)
+}
+
+func (l *Lexer) MakeNotEquals() (*Token, *Error) {
+	startPos := *l.Pos
+
+	l.Advance()
+
+	if l.CurrChar == "=" {
+		l.Advance()
+		return NewToken(TTOp, "!=", &startPos, l.Pos), nil
+	}
+
+	return nil, NewInvalidSyntaxError("Expected '=' after '!'", &startPos, l.Pos)
+}
+
+func (l *Lexer) MakeEquals() *Token {
+	startPos := *l.Pos
+
+	l.Advance()
+
+	if l.CurrChar == "=" {
+		l.Advance()
+		return NewToken(TTOp, "==", &startPos, l.Pos)
+	}
+
+	return NewToken(TTOp, "=", &startPos, l.Pos)
+}
+
+func (l *Lexer) MakeGreaterThan() *Token {
+	startPos := *l.Pos
+
+	l.Advance()
+
+	if l.CurrChar == "=" {
+		l.Advance()
+		return NewToken(TTOp, ">=", &startPos, l.Pos)
+	}
+
+	return NewToken(TTOp, ">", &startPos, l.Pos)
+}
+
+func (l *Lexer) MakeLessThan() *Token {
+	startPos := *l.Pos
+
+	l.Advance()
+
+	if l.CurrChar == "=" {
+		l.Advance()
+		return NewToken(TTOp, "<=", &startPos, l.Pos)
+	}
+
+	return NewToken(TTOp, "<", &startPos, l.Pos)	
 }
 
 func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 	tokens := []*Token{}
 
-	addToken  := func(t *Token) {
+	addToken  := func(t *Token, adv bool) {
 		tokens = append(tokens, t)
-		// don't advance if token is a number cuz the MakeNumber method already advances
-		if t.Type != TTNum && t.Type != TTId {
+		if adv {
 			l.Advance()
 		}
 	}
@@ -93,27 +144,37 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 		if strings.Contains("\t\n ", l.CurrChar) {
 			l.Advance()
 		} else if strings.Contains(Letters, l.CurrChar) {
-			addToken(l.MakeId())
+			addToken(l.MakeId(), false)
 		} else if strings.Contains(Digits, l.CurrChar) {
-			addToken(l.MakeNumber())
+			addToken(l.MakeNumber(), false)
 		} else if l.CurrChar == "+" {
-			addToken(NewToken(TTOp, "+", l.Pos, nil))
+			addToken(NewToken(TTOp, "+", l.Pos, nil), true)
 		} else if l.CurrChar == "-" {
-			addToken(NewToken(TTOp, "-", l.Pos, nil))
+			addToken(NewToken(TTOp, "-", l.Pos, nil), true)
 		} else if l.CurrChar == "*" {
-			addToken(NewToken(TTOp, "*", l.Pos, nil))
+			addToken(NewToken(TTOp, "*", l.Pos, nil), true)
 		} else if l.CurrChar == "/" {
-			addToken(NewToken(TTOp, "/", l.Pos, nil))
+			addToken(NewToken(TTOp, "/", l.Pos, nil), true)
 		} else if l.CurrChar == "%" {
-			addToken(NewToken(TTOp, "%", l.Pos, nil))
+			addToken(NewToken(TTOp, "%", l.Pos, nil), true)
 		} else if l.CurrChar == "^" {
-			addToken(NewToken(TTOp, "^", l.Pos, nil))
-		} else if l.CurrChar == "=" {
-			addToken(NewToken(TTOp, "=", l.Pos, nil))
+			addToken(NewToken(TTOp, "^", l.Pos, nil), true)
 		} else if l.CurrChar == "(" {
-			addToken(NewToken(TTParen, "(", l.Pos, nil))
+			addToken(NewToken(TTParen, "(", l.Pos, nil), true)
 		} else if l.CurrChar == ")" {
-			addToken(NewToken(TTParen, ")", l.Pos, nil))
+			addToken(NewToken(TTParen, ")", l.Pos, nil), true)
+		} else if l.CurrChar == "!" {
+			tok, err := l.MakeNotEquals()
+			if err != nil {
+				return []*Token{}, err
+			}
+			addToken(tok, false)
+		} else if l.CurrChar == "=" {
+			addToken(l.MakeEquals(), false)
+		} else if l.CurrChar == ">" {
+			addToken(l.MakeGreaterThan(), false)
+		} else if l.CurrChar == "<" {
+			addToken(l.MakeLessThan(), false)
 		} else {
 			endPos := *l.Pos
 			endPos.Advance(l.CurrChar)

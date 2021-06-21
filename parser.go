@@ -98,13 +98,13 @@ func (p *Parser) Atom() *ParseResult {
 	}
 
 	return pr.Failure(NewInvalidSyntaxError(
-		"Expected int or float",
+		"Expected int, float, identifier, '+', '-' or '('",
 		t.StartPos,
 		t.EndPos))
 }
 
 func (p *Parser) Power() *ParseResult {
-	return p.BinOp(p.Atom, p.Factor, []string{"^"})
+	return p.BinOp(p.Atom, p.Factor, TTOp, []string{"^"})
 }
 
 func (p *Parser) Factor() *ParseResult {
@@ -124,7 +124,7 @@ func (p *Parser) Factor() *ParseResult {
 }
 
 func (p *Parser) Term() *ParseResult {
-	return p.BinOp(p.Factor, p.Factor, []string{"*", "/", "%"})
+	return p.BinOp(p.Factor, p.Factor, TTOp, []string{"*", "/", "%"})
 }
 
 func (p *Parser) Exp() *ParseResult {
@@ -154,10 +154,46 @@ func (p *Parser) Exp() *ParseResult {
 		}
 	}
 
-	return p.BinOp(p.Term, p.Term, []string{"+", "-"})
+	node := pr.Register(p.BinOp(p.CompExp, p.CompExp, TTKeyword, []string{"and", "or"}))
+
+	if pr.Error != nil {
+		return pr.Failure(NewInvalidSyntaxError(
+			"Expected 'set', number, identifier, '+', '-', '(' or 'not'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	return pr.Success(node)
 }
 
-func (p *Parser) BinOp(rf, lf func() *ParseResult, ops []string) *ParseResult {
+func (p *Parser) CompExp() *ParseResult {
+	pr := NewParseResult()
+
+	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "not" {
+		op := p.CurrToken
+		pr.Register(p.Advance())
+		node := pr.Register(p.CompExp())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(NewUnaryOpNode(op, node))
+	}
+
+	node := pr.Register(p.BinOp(p.ArithExp, p.ArithExp, TTOp, []string{"==", "!=", ">", ">=", "<", "<="}))
+	if pr.Error != nil {
+		return pr.Failure(NewInvalidSyntaxError(
+			"Expected number, identifier, '+', '-', '(' or 'not'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+	return pr.Success(node)
+}
+
+func (p *Parser) ArithExp() *ParseResult {
+	return p.BinOp(p.Term, p.Term, TTOp, []string{"+", "-"})
+}
+
+func (p *Parser) BinOp(rf, lf func() *ParseResult, opType string, ops []string) *ParseResult {
 	pr := NewParseResult()
   r := pr.Register(rf())
 
@@ -165,7 +201,7 @@ func (p *Parser) BinOp(rf, lf func() *ParseResult, ops []string) *ParseResult {
 		return pr
 	}
 
-	for p.CurrToken.Type == TTOp && Contains(ops, p.CurrToken.Value) {
+	for p.CurrToken.Type == opType && Contains(ops, p.CurrToken.Value) {
 		op := p.CurrToken
 		pr.Register(p.Advance())
 		l := pr.Register(lf())
