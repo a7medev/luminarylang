@@ -21,7 +21,7 @@ func NewLexer(txt, fn, ftxt string) *Lexer {
 		Text: txt,
 		FileName: fn,
 		FileText: ftxt,
-		Pos: NewPosition(-1, 1, -1, fn, ftxt),
+		Pos: NewPosition(-1, 1, 0, fn, ftxt),
 	}
 
 	lexer.Advance()

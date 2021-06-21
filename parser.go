@@ -152,6 +152,8 @@ func (p *Parser) Exp() *ParseResult {
 
 			return pr.Success(NewVarAssignNode(varName, exp))
 		}
+		return pr.Failure(NewInvalidSyntaxError(
+			"Expected identifier", p.CurrToken.StartPos, p.CurrToken.EndPos))
 	}
 
 	node := pr.Register(p.BinOp(p.CompExp, p.CompExp, TTKeyword, []string{"and", "or"}))
