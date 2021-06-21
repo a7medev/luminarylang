@@ -10,14 +10,21 @@ const TTEOF   = "EOF"
 type Token struct {
 	Type string
 	Value interface{}
-	Pos *Position
+	StartPos, EndPos *Position
 }
 
-func NewToken(t string, v interface{}, p *Position) *Token {
+func NewToken(t string, v interface{}, sp, ep *Position,) *Token {
 	token := &Token{
 		Type: t,
 		Value: v,
-		Pos: p,
+		StartPos: sp,
+		EndPos: ep,
+	}
+
+	if ep == nil {
+		endPos := *sp
+		endPos.Advance("")
+		token.EndPos = &endPos
 	}
 
 	return token

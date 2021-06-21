@@ -4,44 +4,46 @@ import "fmt"
 
 type Error struct {
 	Name, Details string
-	Pos *Position
+	StartPos *Position
+	EndPos *Position
 }
 
-func NewError(n, d string, p *Position) *Error {
+func NewError(n, d string, sp, ep *Position) *Error {
 	e := &Error{
 		Name: n,
 		Details: d,
-		Pos: p,
+		StartPos: sp,
+		EndPos: ep,
 	}
+
+	if ep == nil {
+		endPos := *sp
+		endPos.Advance("")
+		e.EndPos = &endPos
+	}
+
 	return e
 }
 
 func (e *Error) String() string {
 	return fmt.Sprintf(
-		"%vError(%v): %v.\nFile: %v - Line: %v - Col: %v",
+		"%vError(%v): %v.\nFile: %v - Line: %v - Col: %v:%v",
 		"\033[31m",
 		e.Name,
 		e.Details,
-		e.Pos.FileName,
-		e.Pos.Line,
-		e.Pos.Col,
+		e.StartPos.FileName,
+		e.StartPos.Line,
+		e.StartPos.Col,
+		e.EndPos.Col,
 	)
 }
 
-func NewIlligalCharError(d string, p *Position) *Error {
-	e := &Error{
-		Name: "Illigal Char",
-		Details: d,
-		Pos: p,
-	}
+func NewIlligalCharError(d string, sp, ep *Position) *Error {
+	e := NewError("Illigal Char", d, sp, ep)
 	return e
 }
 
-func NewInvalidSyntaxError(d string, p *Position) *Error {
-	e := &Error{
-		Name: "Invalid Syntax",
-		Details: d,
-		Pos: p,
-	}
+func NewInvalidSyntaxError(d string, sp, ep *Position) *Error {
+	e := NewError("Invalid Syntax", d, sp, ep)
 	return e
 }

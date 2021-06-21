@@ -7,7 +7,7 @@ import (
 
 type Number struct {
 	Value float64
-	Pos *Position
+	StartPos, EndPos *Position
 }
 
 func NewNumber(v float64) *Number {
@@ -20,8 +20,14 @@ func (n *Number) String() string {
 	return fmt.Sprintf("%v", n.Value);
 }
 
-func (n *Number) SetPos(p *Position) *Number {
-	n.Pos = p
+func (n *Number) SetPos(sp, ep *Position) *Number {
+	n.StartPos = sp
+	n.EndPos = ep
+	if ep == nil {
+		endPos := *sp
+		endPos.Advance("")
+		n.EndPos = &endPos
+	}
 	return n
 }
 

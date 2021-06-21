@@ -59,7 +59,11 @@ func (p *Parser) Parse() *ParseResult {
 	pr := p.Exp()
 
 	if pr.Error == nil && p.CurrToken.Type != TTEOF {
-		return pr.Failure(NewInvalidSyntaxError("Expected '+', '-', '*', '/', '%' or '^'", p.CurrToken.Pos))
+		return pr.Failure(
+			NewInvalidSyntaxError(
+				"Expected '+', '-', '*', '/', '%' or '^'",
+				p.CurrToken.StartPos,
+				p.CurrToken.EndPos))
 	}
 
 	return pr
@@ -86,13 +90,20 @@ func (p *Parser) Factor() *ParseResult {
 			pr.Register(p.Advance())
 			return pr.Success(exp)
 		} else {
-			return pr.Failure(NewInvalidSyntaxError("Expected ')'", p.CurrToken.Pos))
+			return pr.Failure(
+				NewInvalidSyntaxError(
+					"Expected ')'",
+					p.CurrToken.StartPos,
+					p.CurrToken.EndPos))
 		}
 	} else if t.Type == TTNum {
 		pr.Register(p.Advance())
 		return pr.Success(NewNumberNode(t))
 	}
-	return pr.Failure(NewInvalidSyntaxError("Expected int or float", t.Pos))
+	return pr.Failure(NewInvalidSyntaxError(
+		"Expected int or float",
+		t.StartPos,
+		t.EndPos))
 }
 
 func (p *Parser) Term() *ParseResult {

@@ -21,7 +21,7 @@ func (i *Interpretor) Visit(n interface{}) *Number {
 
 func (i *Interpretor) VisitNumberNode(n *NumberNode) *Number {
 	if val, ok := n.Token.Value.(float64); ok {
-		return NewNumber(val).SetPos(n.Token.Pos)
+		return NewNumber(val).SetPos(n.Token.StartPos, n.Token.EndPos)
 	} else {
 		panic("Invalid number node")
 	}

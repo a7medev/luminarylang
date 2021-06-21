@@ -52,7 +52,9 @@ func (l *Lexer) MakeNumber() *Token {
 	if err != nil {
 		panic(err)
 	}
-	return NewToken(TTNum, val, l.Pos)
+	endPos := l.Pos
+	endPos.Col += len(numStr)
+	return NewToken(TTNum, val, l.Pos, endPos)
 }
 
 func (l *Lexer) MakeTokens() ([]*Token, *Error) {
@@ -72,27 +74,30 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 		} else if strings.Contains(Digits, l.CurrChar) {
 			addToken(l.MakeNumber())
 		} else if l.CurrChar == "+" {
-			addToken(NewToken(TTOp, "+", l.Pos))
+			addToken(NewToken(TTOp, "+", l.Pos, nil))
 		} else if l.CurrChar == "-" {
-			addToken(NewToken(TTOp, "-", l.Pos))
+			addToken(NewToken(TTOp, "-", l.Pos, nil))
 		} else if l.CurrChar == "*" {
-			addToken(NewToken(TTOp, "*", l.Pos))
+			addToken(NewToken(TTOp, "*", l.Pos, nil))
 		} else if l.CurrChar == "/" {
-			addToken(NewToken(TTOp, "/", l.Pos))
+			addToken(NewToken(TTOp, "/", l.Pos, nil))
 		} else if l.CurrChar == "%" {
-			addToken(NewToken(TTOp, "%", l.Pos))
+			addToken(NewToken(TTOp, "%", l.Pos, nil))
 		} else if l.CurrChar == "^" {
-			addToken(NewToken(TTOp, "^", l.Pos))
+			addToken(NewToken(TTOp, "^", l.Pos, nil))
 		} else if l.CurrChar == "(" {
-			addToken(NewToken(TTParen, "(", l.Pos))
+			addToken(NewToken(TTParen, "(", l.Pos, nil))
 		} else if l.CurrChar == ")" {
-			addToken(NewToken(TTParen, ")", l.Pos))
+			addToken(NewToken(TTParen, ")", l.Pos, nil))
 		} else {
-			return []*Token{}, NewIlligalCharError("'" + l.CurrChar + "'", l.Pos)
+			endPos := *l.Pos
+			endPos.Advance(l.CurrChar)
+			text := l.Text[l.Pos.Index:endPos.Index]
+			return []*Token{}, NewIlligalCharError("'" + text + "'", l.Pos, &endPos)
 		}
 	}
 
-	tokens = append(tokens, NewToken(TTEOF, TTEOF, l.Pos))
+	tokens = append(tokens, NewToken(TTEOF, TTEOF, l.Pos, nil))
 
 	return tokens, nil
 }
