@@ -92,6 +92,9 @@ func (p *Parser) Atom() *ParseResult {
 	} else if t.Type == TTNum {
 		pr.Register(p.Advance())
 		return pr.Success(NewNumberNode(t))
+	} else if t.Type == TTId {
+		pr.Register(p.Advance())
+		return pr.Success(NewVarAccessNode(t))
 	}
 
 	return pr.Failure(NewInvalidSyntaxError(
@@ -125,6 +128,32 @@ func (p *Parser) Term() *ParseResult {
 }
 
 func (p *Parser) Exp() *ParseResult {
+	pr := NewParseResult()
+
+	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "set" {
+		pr.Register(p.Advance())
+
+		varName := p.CurrToken
+
+		if p.CurrToken.Type == TTId {
+			pr.Register(p.Advance())
+			
+			if p.CurrToken.Type != TTOp || p.CurrToken.Value != "=" {
+				return pr.Failure(NewInvalidSyntaxError(
+					"Expected =", p.CurrToken.StartPos, p.CurrToken.EndPos))
+			}
+
+			pr.Register(p.Advance())
+			exp := pr.Register(p.Exp())
+
+			if pr.Error != nil {
+				return pr
+			}
+
+			return pr.Success(NewVarAssignNode(varName, exp))
+		}
+	}
+
 	return p.BinOp(p.Term, p.Term, []string{"+", "-"})
 }
 

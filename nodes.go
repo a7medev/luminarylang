@@ -52,3 +52,30 @@ func NewUnaryOpNode(o *Token, n interface{}) *UnaryOpNode {
 
 	return u
 }
+
+type VarAssignNode struct {
+	NameToken *Token
+	ValueNode interface{}
+}
+
+func NewVarAssignNode(n *Token, v interface{}) *VarAssignNode {
+	va := &VarAssignNode{
+		NameToken: n,
+		ValueNode: v,
+	}
+
+	return va
+}
+
+
+type VarAccessNode struct {
+	NameToken *Token
+}
+
+func NewVarAccessNode(n *Token) *VarAccessNode {
+	va := &VarAccessNode{
+		NameToken: n,
+	}
+
+	return va
+}

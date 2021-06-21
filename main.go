@@ -14,6 +14,8 @@ func getInput(prompt string, r *bufio.Reader) (string, error) {
 	return strings.TrimSpace(input), err
 }
 
+var globalSymbolTable = NewSymbolTable()
+
 func run(t string) {
 	lexer := NewLexer(t, "<stdin>", "")
 	tokens, err := lexer.MakeTokens()
@@ -32,8 +34,10 @@ func run(t string) {
 	}
 
 	interp := NewInterpretor()
+	ctx := NewContext("<root>")
+	ctx.SymbolTable = globalSymbolTable
 
-	res := interp.Visit(ast.Node)
+	res := interp.Visit(ast.Node, ctx)
 	fmt.Println(res)
 }
 

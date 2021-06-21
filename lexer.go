@@ -9,6 +9,8 @@ const Digits = "0123456789"
 const Letters = "abcdefghijklmnopqrstunwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const IdAllowedChars = Letters + Digits + "_"
 
+var Keywords = [1]string{"set"}
+
 type Lexer struct {
 	CurrChar, Text,	FileName,	FileText string
 	Pos *Position
@@ -47,6 +49,9 @@ func (l *Lexer) MakeId() *Token {
 	endPos := *l.Pos
 	endPos.Index += len(idStr)
 	endPos.Col += len(idStr)
+	if Contains(Keywords, idStr) {
+		return NewToken(TTKeyword, idStr, l.Pos, &endPos)
+	}
 	return NewToken(TTId, idStr, l.Pos, &endPos)
 }
 
@@ -103,6 +108,8 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 			addToken(NewToken(TTOp, "%", l.Pos, nil))
 		} else if l.CurrChar == "^" {
 			addToken(NewToken(TTOp, "^", l.Pos, nil))
+		} else if l.CurrChar == "=" {
+			addToken(NewToken(TTOp, "=", l.Pos, nil))
 		} else if l.CurrChar == "(" {
 			addToken(NewToken(TTParen, "(", l.Pos, nil))
 		} else if l.CurrChar == ")" {

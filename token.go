@@ -2,11 +2,12 @@ package main
 
 import "fmt"
 
-const TTNum   = "NUM"
-const TTOp    = "OP"
-const TTId    = "ID"
-const TTParen = "PAREN"
-const TTEOF   = "EOF"
+const TTNum     = "NUM"
+const TTOp      = "OP"
+const TTId      = "ID"
+const TTParen   = "PAREN"
+const TTEOF     = "EOF"
+const TTKeyword = "KEYWORD"
 
 type Token struct {
 	Type string
@@ -14,7 +15,7 @@ type Token struct {
 	StartPos, EndPos *Position
 }
 
-func NewToken(t string, v interface{}, sp, ep *Position,) *Token {
+func NewToken(t string, v interface{}, sp, ep *Position) *Token {
 	token := &Token{
 		Type: t,
 		Value: v,
@@ -24,7 +25,8 @@ func NewToken(t string, v interface{}, sp, ep *Position,) *Token {
 
 	if ep == nil {
 		endPos := *sp
-		endPos.Advance("")
+		endPos.Index += 1
+		endPos.Col += 1
 		token.EndPos = &endPos
 	}
 
