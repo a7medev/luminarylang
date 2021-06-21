@@ -19,7 +19,7 @@ func NewLexer(txt, fn, ftxt string) *Lexer {
 		Text: txt,
 		FileName: fn,
 		FileText: ftxt,
-		Pos: NewPosition(-1, 1, 0, fn, ftxt),
+		Pos: NewPosition(-1, 1, -1, fn, ftxt),
 	}
 
 	lexer.Advance()
@@ -68,9 +68,9 @@ func (l *Lexer) MakeNumber() *Token {
 	if err != nil {
 		panic(err)
 	}
-	endPos := l.Pos
+	endPos := *l.Pos
 	endPos.Col += len(numStr)
-	return NewToken(TTNum, val, l.Pos, endPos)
+	return NewToken(TTNum, val, l.Pos, &endPos)
 }
 
 func (l *Lexer) MakeTokens() ([]*Token, *Error) {
