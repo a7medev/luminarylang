@@ -69,18 +69,11 @@ func (p *Parser) Parse() *ParseResult {
 	return pr
 }
 
-func (p *Parser) Factor() *ParseResult {
+func (p *Parser) Atom() *ParseResult {
 	pr := NewParseResult()
 	t := p.CurrToken
 
-	if t.Type == TTOp && t.Value == "+" || t.Value == "-" {
-		pr.Register(p.Advance())
-		fc := pr.Register(p.Factor())
-		if pr.Error != nil {
-			return pr
-		}
-		return pr.Success(NewUnaryOpNode(t, fc))
-	} else if t.Type == TTParen && t.Value == "(" {
+	if t.Type == TTParen && t.Value == "(" {
 		pr.Register(p.Advance())
 		exp := pr.Register(p.Exp())
 		if pr.Error != nil {
@@ -100,23 +93,44 @@ func (p *Parser) Factor() *ParseResult {
 		pr.Register(p.Advance())
 		return pr.Success(NewNumberNode(t))
 	}
+
 	return pr.Failure(NewInvalidSyntaxError(
 		"Expected int or float",
 		t.StartPos,
 		t.EndPos))
 }
 
+func (p *Parser) Power() *ParseResult {
+	return p.BinOp(p.Atom, p.Factor, []string{"^"})
+}
+
+func (p *Parser) Factor() *ParseResult {
+	pr := NewParseResult()
+	t := p.CurrToken
+
+	if t.Type == TTOp && t.Value == "+" || t.Value == "-" {
+		pr.Register(p.Advance())
+		fc := pr.Register(p.Factor())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(NewUnaryOpNode(t, fc))
+	}
+
+	return p.Power()
+}
+
 func (p *Parser) Term() *ParseResult {
-	return p.BinOp(p.Factor, []string{"^", "*", "/", "%"})
+	return p.BinOp(p.Factor, p.Factor, []string{"*", "/", "%"})
 }
 
 func (p *Parser) Exp() *ParseResult {
-	return p.BinOp(p.Term, []string{"+", "-"})
+	return p.BinOp(p.Term, p.Term, []string{"+", "-"})
 }
 
-func (p *Parser) BinOp(f func() *ParseResult, ops []string) *ParseResult {
+func (p *Parser) BinOp(rf, lf func() *ParseResult, ops []string) *ParseResult {
 	pr := NewParseResult()
-  l := pr.Register(f())
+  r := pr.Register(rf())
 
 	if pr.Error != nil {
 		return pr
@@ -125,14 +139,14 @@ func (p *Parser) BinOp(f func() *ParseResult, ops []string) *ParseResult {
 	for p.CurrToken.Type == TTOp && Contains(ops, p.CurrToken.Value) {
 		op := p.CurrToken
 		pr.Register(p.Advance())
-		r := pr.Register(f())
+		l := pr.Register(lf())
 
 		if pr.Error != nil {
 			return pr
 		}
 
-		l = NewBinNode(l, r, op)
+		r = NewBinNode(r, l, op)
 	}
 
-	return pr.Success(l)
+	return pr.Success(r)
 }
