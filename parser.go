@@ -181,6 +181,47 @@ func (p *Parser) IfExp() *ParseResult {
 	return pr.Success(NewIfNode(cases, elseCase))
 }
 
+func (p *Parser) WhileExp() *ParseResult {
+	pr := NewParseResult()
+	
+	if p.CurrToken.Type != TTKeyword || p.CurrToken.Value != "while" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected 'while'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	cond := pr.Register(p.Exp())
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '{'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	exp := pr.Register(p.Exp())
+
+	if pr.Error != nil {
+		return pr
+	}
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '}'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	return pr.Success(NewWhileNode(cond, exp))
+}
+
 func (p *Parser) Atom() *ParseResult {
 	pr := NewParseResult()
 	t := p.CurrToken
@@ -213,6 +254,12 @@ func (p *Parser) Atom() *ParseResult {
 			return pr
 		}
 		return pr.Success(ifExp)
+	} else if t.Type == TTKeyword && t.Value == "while" {
+		whileExp := pr.Register(p.WhileExp())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(whileExp)
 	}
 
 	return pr.Failure(NewInvalidSyntaxError(

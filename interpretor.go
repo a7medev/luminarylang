@@ -31,6 +31,9 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) interface{} {
 		return i.VisitVarAssignNode(assign, ctx)
 	} else if ifN, ok := n.(*IfNode); ok {
 		return i.VisitIfNode(ifN, ctx)
+	} else if while, ok := n.(*WhileNode); ok {
+		i.VisitWhileNode(while, ctx)
+		return nil
 	} else {
 		panic("no visit method for this node")
 	}
@@ -178,4 +181,17 @@ func (i *Interpretor) VisitIfNode(ifN *IfNode, ctx *Context) interface{} {
 	}
 
 	return nil
+}
+
+func (i *Interpretor) VisitWhileNode(w *WhileNode, ctx *Context) {
+	cond := func() *Number {
+		return i.Visit(w.Cond, ctx).(*Number)
+	}
+
+	for true {
+		if !cond().IsTrue() {
+			break
+		}
+		i.Visit(w.Exp, ctx)
+	}
 }

@@ -93,3 +93,16 @@ func NewIfNode(cases [][2]interface{}, elseCase interface{}) *IfNode {
 
 	return n
 }
+
+type WhileNode struct {
+	Cond, Exp interface{}
+}
+
+func NewWhileNode(c, e interface{}) *WhileNode {
+	w := &WhileNode{
+		Cond: c,
+		Exp: e,
+	}
+
+	return w
+}

@@ -9,7 +9,7 @@ const Digits = "0123456789"
 const Letters = "abcdefghijklmnopqrstunwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const IdAllowedChars = Letters + Digits + "_"
 
-var Keywords = [7]string{"set", "and", "or", "not", "if", "else", "elif"}
+var Keywords = [8]string{"set", "and", "or", "not", "if", "else", "elif", "while"}
 
 type Lexer struct {
 	CurrChar, Text,	FileName,	FileText string
