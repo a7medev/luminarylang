@@ -160,9 +160,9 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 		} else if l.CurrChar == "^" {
 			addToken(NewToken(TTOp, "^", l.Pos, nil), true)
 		} else if l.CurrChar == "(" {
-			addToken(NewToken(TTParen, "(", l.Pos, nil), true)
+			addToken(NewToken(TTOp, "(", l.Pos, nil), true)
 		} else if l.CurrChar == ")" {
-			addToken(NewToken(TTParen, ")", l.Pos, nil), true)
+			addToken(NewToken(TTOp, ")", l.Pos, nil), true)
 		} else if l.CurrChar == "!" {
 			tok, err := l.MakeNotEquals()
 			if err != nil {

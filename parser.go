@@ -73,13 +73,13 @@ func (p *Parser) Atom() *ParseResult {
 	pr := NewParseResult()
 	t := p.CurrToken
 
-	if t.Type == TTParen && t.Value == "(" {
+	if t.Type == TTOp && t.Value == "(" {
 		pr.Register(p.Advance())
 		exp := pr.Register(p.Exp())
 		if pr.Error != nil {
 			return pr
 		}
-		if p.CurrToken.Type == TTParen && p.CurrToken.Value == ")" {
+		if p.CurrToken.Type == TTOp && p.CurrToken.Value == ")" {
 			pr.Register(p.Advance())
 			return pr.Success(exp)
 		} else {
