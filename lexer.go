@@ -9,7 +9,7 @@ const Digits = "0123456789"
 const Letters = "abcdefghijklmnopqrstunwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const IdAllowedChars = Letters + Digits + "_"
 
-var Keywords = [4]string{"set", "and", "or", "not"}
+var Keywords = [7]string{"set", "and", "or", "not", "if", "else", "elif"}
 
 type Lexer struct {
 	CurrChar, Text,	FileName,	FileText string
@@ -163,6 +163,10 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 			addToken(NewToken(TTOp, "(", l.Pos, nil), true)
 		} else if l.CurrChar == ")" {
 			addToken(NewToken(TTOp, ")", l.Pos, nil), true)
+		} else if l.CurrChar == "{" {
+			addToken(NewToken(TTOp, "{", l.Pos, nil), true)
+		} else if l.CurrChar == "}" {
+			addToken(NewToken(TTOp, "}", l.Pos, nil), true)
 		} else if l.CurrChar == "!" {
 			tok, err := l.MakeNotEquals()
 			if err != nil {

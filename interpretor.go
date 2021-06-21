@@ -29,6 +29,8 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) interface{} {
 		return val
 	} else if assign, ok := n.(*VarAssignNode); ok {
 		return i.VisitVarAssignNode(assign, ctx)
+	} else if ifN, ok := n.(*IfNode); ok {
+		return i.VisitIfNode(ifN, ctx)
 	} else {
 		panic("no visit method for this node")
 	}
@@ -155,4 +157,25 @@ func (i *Interpretor) VisitVarAccessNode(va *VarAccessNode, ctx *Context) (inter
 			va.NameToken.EndPos)
 	}
 	return val, nil
+}
+
+func (i *Interpretor) VisitIfNode(ifN *IfNode, ctx *Context) interface{} {
+	for _, cs := range ifN.Cases {
+		cond := cs[0]
+		condVal := i.Visit(cond, ctx)
+		
+		if condVal.(*Number).IsTrue() {
+			exp := cs[1]
+			expVal := i.Visit(exp, ctx)
+			return expVal
+		}
+	}
+
+	if ifN.ElseCase != nil {
+		exp := ifN.ElseCase
+		expVal := i.Visit(exp, ctx)
+		return expVal
+	}
+
+	return nil
 }

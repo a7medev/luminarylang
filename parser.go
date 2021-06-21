@@ -69,6 +69,118 @@ func (p *Parser) Parse() *ParseResult {
 	return pr
 }
 
+func (p *Parser) IfExp() *ParseResult {
+	pr := NewParseResult()
+	cases := [][2]interface{}{}
+	var elseCase interface{}
+
+	if p.CurrToken.Type != TTKeyword || p.CurrToken.Value != "if" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected 'if'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	cond := pr.Register(p.Exp())
+	if pr.Error != nil {
+		return pr
+	}
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '{'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	exp := pr.Register(p.Exp())
+	if pr.Error != nil {
+		return pr
+	}
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '}'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	cases = append(cases, [2]interface{}{cond, exp})
+
+	for p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "elif" {
+		pr.Register(p.Advance())
+
+		cond := pr.Register(p.Exp())
+		if pr.Error != nil {
+			return pr
+		}
+
+		if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
+			return pr.Failure(
+				NewInvalidSyntaxError("Expected '{'",
+				p.CurrToken.StartPos,
+				p.CurrToken.EndPos))
+		}
+
+		pr.Register(p.Advance())
+
+		exp := pr.Register(p.Exp())
+		if pr.Error != nil {
+			return pr
+		}
+
+		if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
+			return pr.Failure(
+				NewInvalidSyntaxError("Expected '}'",
+				p.CurrToken.StartPos,
+				p.CurrToken.EndPos))
+		}
+
+		pr.Register(p.Advance())
+
+		cases = append(cases, [2]interface{}{cond, exp})
+	}
+
+	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "else" {
+		pr.Register(p.Advance())
+
+		if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
+			return pr.Failure(
+				NewInvalidSyntaxError("Expected '{'",
+				p.CurrToken.StartPos,
+				p.CurrToken.EndPos))
+		}
+
+		pr.Register(p.Advance())
+
+		exp := pr.Register(p.Exp())
+		if pr.Error != nil {
+			return pr
+		}
+		
+		if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
+			return pr.Failure(
+				NewInvalidSyntaxError("Expected '}'",
+				p.CurrToken.StartPos,
+				p.CurrToken.EndPos))
+		}
+
+		pr.Register(p.Advance())
+
+		elseCase = exp
+	}
+
+	pr.Register(p.Advance())
+
+	return pr.Success(NewIfNode(cases, elseCase))
+}
+
 func (p *Parser) Atom() *ParseResult {
 	pr := NewParseResult()
 	t := p.CurrToken
@@ -95,6 +207,12 @@ func (p *Parser) Atom() *ParseResult {
 	} else if t.Type == TTId {
 		pr.Register(p.Advance())
 		return pr.Success(NewVarAccessNode(t))
+	} else if t.Type == TTKeyword && t.Value == "if" {
+		ifExp := pr.Register(p.IfExp())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(ifExp)
 	}
 
 	return pr.Failure(NewInvalidSyntaxError(

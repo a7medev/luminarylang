@@ -79,3 +79,17 @@ func NewVarAccessNode(n *Token) *VarAccessNode {
 
 	return va
 }
+
+type IfNode struct {
+	Cases [][2]interface{}
+	ElseCase interface{}
+}
+
+func NewIfNode(cases [][2]interface{}, elseCase interface{}) *IfNode {
+	n := &IfNode{
+		Cases: cases,
+		ElseCase: elseCase,
+	}
+
+	return n
+}
