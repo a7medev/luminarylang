@@ -179,8 +179,5 @@ func (n *Number) Or(other interface{}) (*Number, *Error) {
 }
 
 func (n *Number) IsTrue() bool {
-	if n.Value != 0 {
-		return true
-	}
-	return false
+	return n.Value != 0
 }
