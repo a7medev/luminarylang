@@ -47,3 +47,8 @@ func NewInvalidSyntaxError(d string, sp, ep *Position) *Error {
 	e := NewError("Invalid Syntax", d, sp, ep)
 	return e
 }
+
+func NewRuntimeError(d string, sp, ep *Position) *Error {
+	e := NewError("Runtime Error", d, sp, ep)
+	return e
+}

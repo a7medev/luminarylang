@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Interpretor struct {}
 
 func NewInterpretor() *Interpretor {
@@ -33,17 +35,47 @@ func (i *Interpretor) VisitBinOpNode(b *BinOpNode) *Number {
 
 	switch b.Op.Value {
 	case "+":
-		return r.AddTo(l)
+		res, err := r.AddTo(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	case "-":
-		return r.SubBy(l)
+		res, err := r.SubBy(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	case "*":
-		return r.MulBy(l)
+		res, err := r.MulBy(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	case "/":
-		return r.DivBy(l)
+		res, err := r.DivBy(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	case "%":
-		return r.Mod(l)
+		res, err := r.Mod(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	case "^":
-		return r.Pow(l)
+		res, err := r.Pow(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	default:
 		return nil
 	}
@@ -52,7 +84,12 @@ func (i *Interpretor) VisitBinOpNode(b *BinOpNode) *Number {
 func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode) *Number {
 	n := i.Visit(u.Node)
 	if u.Op.Value == "-" {
-		return n.MulBy(NewNumber(-1))
+		res, err := n.MulBy(NewNumber(-1))
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	} else {
 		return n
 	}
