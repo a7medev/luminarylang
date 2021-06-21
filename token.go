@@ -4,6 +4,7 @@ import "fmt"
 
 const TTNum   = "NUM"
 const TTOp    = "OP"
+const TTId    = "ID"
 const TTParen = "PAREN"
 const TTEOF   = "EOF"
 

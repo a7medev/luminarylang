@@ -6,6 +6,8 @@ import (
 )
 
 const Digits = "0123456789"
+const Letters = "abcdefghijklmnopqrstunwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const IdAllowedChars = Letters + Digits + "_"
 
 type Lexer struct {
 	CurrChar, Text,	FileName,	FileText string
@@ -32,6 +34,20 @@ func (l *Lexer) Advance() {
 	} else {
 		l.CurrChar = ""
 	}
+}
+
+func (l *Lexer) MakeId() *Token {
+	idStr := ""
+
+	for l.CurrChar != "" && strings.Contains(IdAllowedChars, l.CurrChar) {
+		idStr += l.CurrChar
+		l.Advance()
+	}
+
+	endPos := *l.Pos
+	endPos.Index += len(idStr)
+	endPos.Col += len(idStr)
+	return NewToken(TTId, idStr, l.Pos, &endPos)
 }
 
 func (l *Lexer) MakeNumber() *Token {
@@ -63,7 +79,7 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 	addToken  := func(t *Token) {
 		tokens = append(tokens, t)
 		// don't advance if token is a number cuz the MakeNumber method already advances
-		if t.Type != TTNum {
+		if t.Type != TTNum && t.Type != TTId {
 			l.Advance()
 		}
 	}
@@ -71,6 +87,8 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 	for l.CurrChar != "" {
 		if strings.Contains("\t\n ", l.CurrChar) {
 			l.Advance()
+		} else if strings.Contains(Letters, l.CurrChar) {
+			addToken(l.MakeId())
 		} else if strings.Contains(Digits, l.CurrChar) {
 			addToken(l.MakeNumber())
 		} else if l.CurrChar == "+" {
