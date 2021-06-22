@@ -12,7 +12,7 @@ func NewInterpretor() *Interpretor {
 	return i
 }
 
-func (i *Interpretor) Visit(n interface{}, ctx *Context) interface{} {
+func (i *Interpretor) Visit(n interface{}, ctx *Context) Value {
 	if num, ok := n.(*NumberNode); ok {
 		return i.VisitNumberNode(num, ctx)
 	} else if tern, ok := n.(*TernOpNode); ok {
@@ -41,7 +41,7 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) interface{} {
 	}
 }
 
-func (i *Interpretor) VisitNumberNode(n *NumberNode, ctx *Context) *Number {
+func (i *Interpretor) VisitNumberNode(n *NumberNode, ctx *Context) Value {
 	if val, ok := n.Token.Value.(float64); ok {
 		return NewNumber(val).SetPos(n.Token.StartPos, n.Token.EndPos)
 	} else {
@@ -49,18 +49,18 @@ func (i *Interpretor) VisitNumberNode(n *NumberNode, ctx *Context) *Number {
 	}
 }
 
-func (i *Interpretor) VisitTernOpNode(t *TernOpNode, ctx *Context) *Number {
-	c := i.Visit(t.Cond, ctx).(*Number)
+func (i *Interpretor) VisitTernOpNode(t *TernOpNode, ctx *Context) Value {
+	c := i.Visit(t.Cond, ctx)
 	
 	if c.IsTrue() {
-		return i.Visit(t.Left, ctx).(*Number)	
+		return i.Visit(t.Left, ctx)	
 	}
-	return i.Visit(t.Right, ctx).(*Number)
+	return i.Visit(t.Right, ctx)
 }
 
-func (i *Interpretor) VisitBinOpNode(b *BinOpNode, ctx *Context) *Number {
-	l := i.Visit(b.Right, ctx).(*Number)
-	r := i.Visit(b.Left, ctx).(*Number)
+func (i *Interpretor) VisitBinOpNode(b *BinOpNode, ctx *Context) Value {
+	l := i.Visit(b.Right, ctx)
+	r := i.Visit(b.Left, ctx)
 
 	switch b.Op.Value {
 	case "+":
@@ -156,8 +156,8 @@ func (i *Interpretor) VisitBinOpNode(b *BinOpNode, ctx *Context) *Number {
 	}
 }
 
-func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode, ctx *Context) *Number {
-	n := i.Visit(u.Node, ctx).(*Number)
+func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode, ctx *Context) Value {
+	n := i.Visit(u.Node, ctx)
 	if u.Op.Value == "-" {
 		res, err := n.MulBy(NewNumber(-1))
 		if err != nil {
@@ -172,12 +172,12 @@ func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode, ctx *Context) *Number {
 	}
 }
 
-func (i *Interpretor) VisitVarAssignNode(va *VarAssignNode, ctx *Context) interface{} {
+func (i *Interpretor) VisitVarAssignNode(va *VarAssignNode, ctx *Context) Value {
 	num := i.Visit(va.ValueNode, ctx)
 	return ctx.SymbolTable.Set(va.NameToken.Value.(string), num)
 }
 
-func (i *Interpretor) VisitVarAccessNode(va *VarAccessNode, ctx *Context) (interface{}, *Error) {
+func (i *Interpretor) VisitVarAccessNode(va *VarAccessNode, ctx *Context) (Value, *Error) {
 	name := va.NameToken.Value.(string)
 	val := ctx.SymbolTable.Get(name)
 	if val == nil {
@@ -189,12 +189,12 @@ func (i *Interpretor) VisitVarAccessNode(va *VarAccessNode, ctx *Context) (inter
 	return val, nil
 }
 
-func (i *Interpretor) VisitIfNode(ifN *IfNode, ctx *Context) interface{} {
+func (i *Interpretor) VisitIfNode(ifN *IfNode, ctx *Context) Value {
 	for _, cs := range ifN.Cases {
 		cond := cs[0]
 		condVal := i.Visit(cond, ctx)
-		
-		if condVal.(*Number).IsTrue() {
+
+		if condVal.IsTrue() {
 			exp := cs[1]
 			expVal := i.Visit(exp, ctx)
 			return expVal
@@ -211,11 +211,11 @@ func (i *Interpretor) VisitIfNode(ifN *IfNode, ctx *Context) interface{} {
 }
 
 func (i *Interpretor) VisitWhileNode(w *WhileNode, ctx *Context) {
-	cond := func() *Number {
-		return i.Visit(w.Cond, ctx).(*Number)
+	cond := func() Value {
+		return i.Visit(w.Cond, ctx)
 	}
 
-	for true {
+	for {
 		if !cond().IsTrue() {
 			break
 		}

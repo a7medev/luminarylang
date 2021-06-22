@@ -1,18 +1,18 @@
 package main
 
 type SymbolTable struct {
-	Symbols map[string]interface{}
+	Symbols map[string]Value
 	Parent *SymbolTable
 }
 
 func NewSymbolTable() *SymbolTable {
 	st := &SymbolTable{
-		Symbols: map[string]interface{}{},
+		Symbols: map[string]Value{},
 	}
 	return st
 }
 
-func (st *SymbolTable) Get(n string) interface{} {
+func (st *SymbolTable) Get(n string) Value {
 	val := st.Symbols[n]
 	if val == nil && st.Parent != nil {
 		return st.Parent.Get(n)
@@ -20,7 +20,7 @@ func (st *SymbolTable) Get(n string) interface{} {
 	return val
 }
 
-func (st *SymbolTable) Set(n string, v interface{}) interface{} {
+func (st *SymbolTable) Set(n string, v Value) Value {
 	st.Symbols[n] = v
 	return v
 }
