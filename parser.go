@@ -176,8 +176,6 @@ func (p *Parser) IfExp() *ParseResult {
 		elseCase = exp
 	}
 
-	pr.Register(p.Advance())
-
 	return pr.Success(NewIfNode(cases, elseCase))
 }
 
@@ -222,6 +220,98 @@ func (p *Parser) WhileExp() *ParseResult {
 	return pr.Success(NewWhileNode(cond, exp))
 }
 
+func (p *Parser) ForExp() *ParseResult {
+	pr := NewParseResult()
+
+	if p.CurrToken.Type != TTKeyword || p.CurrToken.Value != "for" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected 'for'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	if p.CurrToken.Type != TTId {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected identifier",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	varName := p.CurrToken
+
+	pr.Register(p.Advance())
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "=" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '='",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	from := pr.Register(p.Exp())
+
+	if pr.Error != nil {
+		return pr
+	}
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != ":" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected ':'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	to := pr.Register(p.Exp())
+
+	if pr.Error != nil {
+		return pr
+	}
+
+	var by interface{} = nil
+
+	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "by" {
+		pr.Register(p.Advance())
+
+		by = pr.Register(p.Exp())
+
+		if pr.Error != nil {
+			return pr
+		}
+	}
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '{'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	body := pr.Register(p.Exp())
+	
+	if pr.Error != nil {
+		return pr
+	}
+	
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '}'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	return pr.Success(NewForNode(varName, from, to, by, body))
+}
+
 func (p *Parser) Atom() *ParseResult {
 	pr := NewParseResult()
 	t := p.CurrToken
@@ -263,6 +353,12 @@ func (p *Parser) Atom() *ParseResult {
 			return pr
 		}
 		return pr.Success(whileExp)
+	} else if t.Type == TTKeyword && t.Value == "for" {
+		forExp := pr.Register(p.ForExp())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(forExp)
 	} else if t.Type == TTOp && t.Value == "?" {
 		pr.Register(p.Advance())
 	}
@@ -383,10 +479,7 @@ func (p *Parser) CompExp() *ParseResult {
 
 	node := pr.Register(p.BinOp(p.ArithExp, p.ArithExp, TTOp, []string{"==", "!=", ">", ">=", "<", "<="}))
 	if pr.Error != nil {
-		return pr.Failure(NewInvalidSyntaxError(
-			"Expected number, identifier, '+', '-', '(' or 'not'",
-			p.CurrToken.StartPos,
-			p.CurrToken.EndPos))
+		return pr
 	}
 	return pr.Success(node)
 }

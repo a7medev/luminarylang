@@ -116,6 +116,23 @@ func NewWhileNode(c, e interface{}) *WhileNode {
 	return w
 }
 
+type ForNode struct {
+	Var *Token
+	From, To, By, Body interface{}
+}
+
+func NewForNode(v *Token, f, t, b, bd interface{}) *ForNode {
+	fo := &ForNode{
+		Var: v,
+		From: f,
+		To: t,
+		By: b,
+		Body: bd,
+	}
+
+	return fo
+}
+
 type TernOpNode struct {
 	Cond, Left, Right interface{}
 }

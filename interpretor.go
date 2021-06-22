@@ -35,6 +35,9 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) Value {
 		return i.VisitVarAssignNode(assign, ctx)
 	} else if ifN, ok := n.(*IfNode); ok {
 		return i.VisitIfNode(ifN, ctx)
+	} else if forN, ok := n.(*ForNode); ok {
+		i.VisitForNode(forN, ctx)
+		return nil
 	} else if while, ok := n.(*WhileNode); ok {
 		i.VisitWhileNode(while, ctx)
 		return nil
@@ -221,14 +224,47 @@ func (i *Interpretor) VisitIfNode(ifN *IfNode, ctx *Context) Value {
 }
 
 func (i *Interpretor) VisitWhileNode(w *WhileNode, ctx *Context) {
-	cond := func() Value {
-		return i.Visit(w.Cond, ctx)
+	cond := func() bool {
+		return i.Visit(w.Cond, ctx).IsTrue()
 	}
 
 	for {
-		if !cond().IsTrue() {
+		if !cond() {
 			break
 		}
 		i.Visit(w.Exp, ctx)
+	}
+}
+
+func (i *Interpretor) VisitForNode(f *ForNode, ctx *Context) {
+	from := i.Visit(f.From, ctx).GetVal().(float64)
+	to := i.Visit(f.To, ctx).GetVal().(float64)
+	by := NewNumber(1)
+
+	varName := f.Var.Value.(string)
+
+	if f.By != nil {
+		by = i.Visit(f.By, ctx)
+	}
+
+	byVal := by.GetVal().(float64)
+
+	cond := func() bool {
+		if byVal > 0 {
+			return from <= to
+		} else {
+			return from >= to
+		}
+	}
+
+	for {
+		if cond() {
+			ctx.SymbolTable.Set(varName, NewNumber(from))
+			from += byVal
+			i.Visit(f.Body, ctx)
+			} else {
+			ctx.SymbolTable.Del(varName)
+			break
+		}
 	}
 }
