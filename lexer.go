@@ -11,6 +11,8 @@ const IdAllowedChars = Letters + Digits + "_"
 
 var Keywords = [8]string{"set", "and", "or", "not", "if", "else", "elif", "while"}
 
+const SimpleOps = "+-*/%^(){}"
+
 type Lexer struct {
 	CurrChar, Text,	FileName,	FileText string
 	Pos *Position
@@ -147,26 +149,8 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 			addToken(l.MakeId(), false)
 		} else if strings.Contains(Digits, l.CurrChar) {
 			addToken(l.MakeNumber(), false)
-		} else if l.CurrChar == "+" {
-			addToken(NewToken(TTOp, "+", l.Pos, nil), true)
-		} else if l.CurrChar == "-" {
-			addToken(NewToken(TTOp, "-", l.Pos, nil), true)
-		} else if l.CurrChar == "*" {
-			addToken(NewToken(TTOp, "*", l.Pos, nil), true)
-		} else if l.CurrChar == "/" {
-			addToken(NewToken(TTOp, "/", l.Pos, nil), true)
-		} else if l.CurrChar == "%" {
-			addToken(NewToken(TTOp, "%", l.Pos, nil), true)
-		} else if l.CurrChar == "^" {
-			addToken(NewToken(TTOp, "^", l.Pos, nil), true)
-		} else if l.CurrChar == "(" {
-			addToken(NewToken(TTOp, "(", l.Pos, nil), true)
-		} else if l.CurrChar == ")" {
-			addToken(NewToken(TTOp, ")", l.Pos, nil), true)
-		} else if l.CurrChar == "{" {
-			addToken(NewToken(TTOp, "{", l.Pos, nil), true)
-		} else if l.CurrChar == "}" {
-			addToken(NewToken(TTOp, "}", l.Pos, nil), true)
+		} else if strings.Contains(SimpleOps, l.CurrChar) {
+			addToken(NewToken(TTOp, l.CurrChar, l.Pos, nil), true)
 		} else if l.CurrChar == "!" {
 			tok, err := l.MakeNotEquals()
 			if err != nil {
