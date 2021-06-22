@@ -126,6 +126,20 @@ func (i *Interpretor) VisitBinOpNode(b *BinOpNode, ctx *Context) *Number {
 			return nil
 		}
 		return res
+	case "and":
+		res, err := r.And(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
+	case "or":
+		res, err := r.Or(l)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		return res
 	default:
 		return nil
 	}
@@ -140,6 +154,8 @@ func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode, ctx *Context) *Number {
 			return nil
 		}
 		return res
+	} else if u.Op.Value == "not" {
+		return n.Not()
 	} else {
 		return n
 	}
