@@ -3,6 +3,7 @@ package main
 import "fmt"
 
 const TTNum     = "NUM"
+const TTStr     = "STR"
 const TTOp      = "OP"
 const TTId      = "ID"
 const TTEOF     = "EOF"

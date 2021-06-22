@@ -11,6 +11,15 @@ func NewNumberNode(t *Token) *NumberNode {
 	return n
 }
 
+type StringNode struct {
+	Token *Token
+}
+
+func NewStringNode(t *Token) *StringNode {
+	n := &StringNode{Token: t}
+	return n
+}
+
 func (n *NumberNode) String() string {
 	return n.Token.String()
 }

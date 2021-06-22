@@ -80,6 +80,45 @@ func (l *Lexer) MakeNumber() *Token {
 	return NewToken(TTNum, val, &startPos, &endPos)
 }
 
+func (l *Lexer) MakeString() (*Token, *Error) {
+	str := ""
+	escape := false
+	startPos := *l.Pos
+
+	escapeChars := map[string]string{
+		"n": "\n",
+		"t": "\t",
+		"\"": "\"",
+		"\\": "\\",
+	}
+
+	l.Advance()
+
+	for l.CurrChar != "" && (l.CurrChar != "\"" || escape) {
+		if escape {
+			str += escapeChars[l.CurrChar]
+			if str == "" {
+				return nil, NewInvalidSyntaxError("Expected 'n' or 't' or '\"' after '\\'", &startPos, l.Pos)
+			}
+			escape = false
+		} else if l.CurrChar == "\\" {
+			escape = true
+		} else {
+			str += l.CurrChar
+			escape = false
+		}
+		l.Advance()
+	}
+
+	if l.CurrChar != "\"" {
+		return nil, NewInvalidSyntaxError("Expected '\"'", &startPos, l.Pos)
+	}
+
+	l.Advance()
+	endPos := *l.Pos
+	return NewToken(TTStr, str, &startPos, &endPos), nil
+}
+
 func (l *Lexer) MakeNotEquals() (*Token, *Error) {
 	startPos := *l.Pos
 
@@ -149,6 +188,12 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 			addToken(l.MakeId(), false)
 		} else if strings.Contains(Digits, l.CurrChar) {
 			addToken(l.MakeNumber(), false)
+		} else if l.CurrChar == "\"" {
+			tok, err := l.MakeString()
+			if err != nil {
+				return []*Token{}, err
+			}
+			addToken(tok, false)
 		} else if strings.Contains(SimpleOps, l.CurrChar) {
 			addToken(NewToken(TTOp, l.CurrChar, l.Pos, nil), true)
 		} else if l.CurrChar == "!" {

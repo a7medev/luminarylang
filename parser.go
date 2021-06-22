@@ -245,6 +245,9 @@ func (p *Parser) Atom() *ParseResult {
 	} else if t.Type == TTNum {
 		pr.Register(p.Advance())
 		return pr.Success(NewNumberNode(t))
+	} else if t.Type == TTStr {
+		pr.Register(p.Advance())
+		return pr.Success(NewStringNode(t))
 	} else if t.Type == TTId {
 		pr.Register(p.Advance())
 		return pr.Success(NewVarAccessNode(t))

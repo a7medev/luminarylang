@@ -15,6 +15,8 @@ func NewInterpretor() *Interpretor {
 func (i *Interpretor) Visit(n interface{}, ctx *Context) Value {
 	if num, ok := n.(*NumberNode); ok {
 		return i.VisitNumberNode(num, ctx)
+	} else if str, ok := n.(*StringNode); ok {
+		return i.VisitStringNode(str, ctx)
 	} else if tern, ok := n.(*TernOpNode); ok {
 		return i.VisitTernOpNode(tern, ctx)
 	} else if bin, ok := n.(*BinOpNode); ok {
@@ -38,6 +40,14 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) Value {
 		return nil
 	} else {
 		panic("no visit method for this node")
+	}
+}
+
+func (i *Interpretor) VisitStringNode(s *StringNode, ctx *Context) Value {
+	if val, ok := s.Token.Value.(string); ok {
+		return NewString(val).SetPos(s.Token.StartPos, s.Token.EndPos)
+	} else {
+		panic("Invalid string node")
 	}
 }
 

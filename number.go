@@ -157,7 +157,7 @@ func (n *Number) IsLessThanOrEqual(other interface{}) (Value, *Error) {
 func (n *Number) And(other interface{}) (Value, *Error) {
 	if o, ok := other.(*Number); ok {
 		var val float64 = 0
-		if n.Value >= 1 && o.Value >= 1 {
+		if n.IsTrue() && o.IsTrue() {
 			val = 1
 		}
 		return NewNumber(val), nil
@@ -169,7 +169,7 @@ func (n *Number) And(other interface{}) (Value, *Error) {
 func (n *Number) Or(other interface{}) (Value, *Error) {
 	if o, ok := other.(*Number); ok {
 		var val float64 = 0
-		if n.Value >= 1 || o.Value >= 1 {
+		if n.IsTrue() || o.IsTrue() {
 			val = 1
 		}
 		return NewNumber(val), nil
@@ -179,10 +179,10 @@ func (n *Number) Or(other interface{}) (Value, *Error) {
 }
 
 func (n *Number) Not() Value {
-	if n.Value == 0 {
-		return NewNumber(1)
+	if n.IsTrue() {
+		return NewNumber(0)
 	}
-	return NewNumber(0)
+	return NewNumber(1)
 }
 
 func (n *Number) IsTrue() bool {
