@@ -260,6 +260,8 @@ func (p *Parser) Atom() *ParseResult {
 			return pr
 		}
 		return pr.Success(whileExp)
+	} else if t.Type == TTOp && t.Value == "?" {
+		pr.Register(p.Advance())
 	}
 
 	return pr.Failure(NewInvalidSyntaxError(
@@ -322,6 +324,36 @@ func (p *Parser) Exp() *ParseResult {
 	}
 
 	node := pr.Register(p.BinOp(p.CompExp, p.CompExp, TTKeyword, []string{"and", "or"}))
+
+	if pr.Error != nil {
+		return pr
+	}
+
+	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "?" {
+		pr.Register(p.Advance())
+
+		left := pr.Register(p.Exp())
+		if pr.Error != nil {
+			return pr
+		}
+
+		if p.CurrToken.Type != TTOp || p.CurrToken.Value != ":" {
+			return pr.Failure(
+				NewInvalidSyntaxError(
+					"Expected ':'",
+					p.CurrToken.StartPos,
+					p.CurrToken.EndPos))
+		}
+
+		pr.Register(p.Advance())
+
+		right := pr.Register(p.Exp())
+		if pr.Error != nil {
+			return pr
+		}
+
+		return pr.Success(NewTernOpNode(node, left, right))
+	}
 
 	if pr.Error != nil {
 		return pr.Failure(NewInvalidSyntaxError(

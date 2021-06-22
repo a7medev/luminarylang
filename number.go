@@ -178,6 +178,13 @@ func (n *Number) Or(other interface{}) (*Number, *Error) {
 	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
 }
 
+func (n *Number) Not() *Number {
+	if n.Value == 0 {
+		return NewNumber(1)
+	}
+	return NewNumber(0)
+}
+
 func (n *Number) IsTrue() bool {
 	return n.Value != 0
 }

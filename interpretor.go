@@ -15,6 +15,8 @@ func NewInterpretor() *Interpretor {
 func (i *Interpretor) Visit(n interface{}, ctx *Context) interface{} {
 	if num, ok := n.(*NumberNode); ok {
 		return i.VisitNumberNode(num, ctx)
+	} else if tern, ok := n.(*TernOpNode); ok {
+		return i.VisitTernOpNode(tern, ctx)
 	} else if bin, ok := n.(*BinOpNode); ok {
 		return i.VisitBinOpNode(bin, ctx)
 	} else if unary, ok := n.(*UnaryOpNode); ok {
@@ -45,6 +47,15 @@ func (i *Interpretor) VisitNumberNode(n *NumberNode, ctx *Context) *Number {
 	} else {
 		panic("Invalid number node")
 	}
+}
+
+func (i *Interpretor) VisitTernOpNode(t *TernOpNode, ctx *Context) *Number {
+	c := i.Visit(t.Cond, ctx).(*Number)
+	
+	if c.IsTrue() {
+		return i.Visit(t.Left, ctx).(*Number)	
+	}
+	return i.Visit(t.Right, ctx).(*Number)
 }
 
 func (i *Interpretor) VisitBinOpNode(b *BinOpNode, ctx *Context) *Number {

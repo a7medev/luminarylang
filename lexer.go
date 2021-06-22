@@ -11,7 +11,7 @@ const IdAllowedChars = Letters + Digits + "_"
 
 var Keywords = [8]string{"set", "and", "or", "not", "if", "else", "elif", "while"}
 
-const SimpleOps = "+-*/%^(){}"
+const SimpleOps = "+-*/%^(){}?:"
 
 type Lexer struct {
 	CurrChar, Text,	FileName,	FileText string

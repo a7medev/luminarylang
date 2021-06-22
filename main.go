@@ -18,7 +18,7 @@ var globalSymbolTable = NewSymbolTable()
 
 func run(t string) {
 	globalSymbolTable.Set("true", NewNumber(1))
-	globalSymbolTable.Set("false", NewNumber(1))
+	globalSymbolTable.Set("false", NewNumber(0))
 
 	lexer := NewLexer(t, "<stdin>", "")
 	tokens, err := lexer.MakeTokens()

@@ -106,3 +106,17 @@ func NewWhileNode(c, e interface{}) *WhileNode {
 
 	return w
 }
+
+type TernOpNode struct {
+	Cond, Left, Right interface{}
+}
+
+func NewTernOpNode(c, l, r interface{}) *TernOpNode {
+	t := &TernOpNode{
+		Cond: c,
+		Left: l,
+		Right: r,
+	}
+
+	return t
+}
