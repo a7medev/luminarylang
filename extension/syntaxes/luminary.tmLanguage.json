@@ -74,7 +74,7 @@
       "patterns": [
         {
           "match": "[0-9]+(\\.[0-9]+)?",
-          "name": "constant.numeric.python"
+          "name": "constant.numeric.luminary"
         }
       ]
     }
