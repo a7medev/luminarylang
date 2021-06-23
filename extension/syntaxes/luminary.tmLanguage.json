@@ -56,7 +56,33 @@
         "0": {
           "name": "punctuation.definition.parameters.end.bracket.round.luminary"
         }
-      }
+      },
+      "patterns": [
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#strings"
+        },
+        {
+          "include": "#constants"
+        },
+        {
+          "include": "#comments"
+        },
+        {
+          "include": "#operators"
+        },
+        {
+          "include": "#numbers"
+        },
+        {
+          "include": "#function-call"
+        },
+        {
+          "include": "#variables"
+        }
+      ]
     },
     "strings": {
       "name": "string.quoted.double.luminary",
