@@ -1,0 +1,83 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Luminary",
+  "patterns": [
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#numbers"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.luminary",
+          "match": "\\b(set|and|or|not|if|else|elif|while|for|by|fun)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.luminary",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.luminary",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "constants": {
+      "match": "\\b(?:true|false)\\b",
+      "name": "constant.language.luminary"
+    },
+    "comments": {
+      "patterns": [
+        {
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.luminary"
+            }
+          },
+          "match": "(//).*$\\n?",
+          "name": "comment.line.double-slash.js"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "match": "(==|!=|<=|>=|<(?!<)|>(?!>))",
+          "name": "keyword.operator.comparison.luminary"
+        },
+        {
+          "match": "(\\+|-|\\*|/|%|\\^)",
+          "name": "keyword.operator.arithmetic.luminary"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "match": "[0-9]+(\\.[0-9]+)?",
+          "name": "constant.numeric.python"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.lum"
+}
