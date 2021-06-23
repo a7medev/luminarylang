@@ -146,3 +146,33 @@ func NewTernOpNode(c, l, r interface{}) *TernOpNode {
 
 	return t
 }
+
+type FunDefNode struct {
+	Name string
+	ArgNames []string
+	Body interface{}
+}
+
+func NewFunDefNode(n string, a []string, b interface{}) *FunDefNode {
+	f := &FunDefNode{
+		Name: n,
+		ArgNames: a,
+		Body: b,
+	}
+
+	return f
+}
+
+type FunCallNode struct {
+	Name interface{}
+	Args []interface{}
+}
+
+func NewFunCallNode(n interface{}, a []interface{}) *FunCallNode {
+	f := &FunCallNode{
+		Name: n,
+		Args: a,
+	}
+
+	return f
+}

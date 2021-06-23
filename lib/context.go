@@ -6,7 +6,7 @@ type Context struct {
 	Parent *Context
 }
 
-func NewContext(n string, ) *Context {
+func NewContext(n string) *Context {
 	c := &Context{
 		Name: n,
 	}

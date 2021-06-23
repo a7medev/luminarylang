@@ -41,6 +41,16 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) Value {
 	} else if while, ok := n.(*WhileNode); ok {
 		i.VisitWhileNode(while, ctx)
 		return nil
+	} else if funDef, ok := n.(*FunDefNode); ok {
+		return i.VisitFunDefNode(funDef, ctx)
+	} else if funCall, ok := n.(*FunCallNode); ok {
+		val, err :=  i.VisitFunCallNode(funCall, ctx)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(0)
+			return nil
+		}
+		return val
 	} else {
 		panic("no visit method for this node")
 	}
@@ -267,4 +277,25 @@ func (i *Interpretor) VisitForNode(f *ForNode, ctx *Context) {
 			break
 		}
 	}
+}
+
+func (i *Interpretor) VisitFunDefNode(f *FunDefNode, ctx *Context) Value {
+	fun := NewFunction(f.Name, f.ArgNames, f.Body)
+
+	if f.Name != "" {
+		ctx.SymbolTable.Set(f.Name, fun)
+	}
+
+	return fun
+}
+
+func (i *Interpretor) VisitFunCallNode(f *FunCallNode, ctx *Context) (Value, *Error) {
+	fun := i.Visit(f.Name, ctx)
+	args := []Value{}
+
+	for _, val := range f.Args {
+		args = append(args, i.Visit(val, ctx))
+	}
+
+	return fun.Call(args, ctx)
 }

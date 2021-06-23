@@ -19,4 +19,5 @@ type Value interface {
 	Not() Value
 	IsTrue() bool
 	GetVal() interface{}
+	Call(args []Value, ctx *Context) (Value, *Error)
 }

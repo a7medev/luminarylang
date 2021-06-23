@@ -312,6 +312,126 @@ func (p *Parser) ForExp() *ParseResult {
 	return pr.Success(NewForNode(varName, from, to, by, body))
 }
 
+func (p *Parser) FunDef() *ParseResult {
+	pr := NewParseResult()
+
+	if p.CurrToken.Type != TTKeyword || p.CurrToken.Value != "fun" {
+		return pr.Failure(NewInvalidSyntaxError(
+			"Expected 'fun'", p.CurrToken.StartPos, p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	name := ""
+	args := []string{}
+
+	if p.CurrToken.Type == TTId {
+		name = p.CurrToken.Value.(string)
+
+		pr.Register(p.Advance())
+	}
+
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "(" {
+		return pr.Failure(NewInvalidSyntaxError(
+			"Expected identifier or '('", p.CurrToken.StartPos, p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	if p.CurrToken.Type == TTId {
+		args = append(args, p.CurrToken.Value.(string))
+
+		pr.Register(p.Advance())
+
+		for p.CurrToken.Type == TTOp && p.CurrToken.Value == "," {
+			pr.Register(p.Advance())
+
+			if p.CurrToken.Type != TTId {
+				return pr.Failure(NewInvalidSyntaxError(
+					"Expected identifer",
+					p.CurrToken.StartPos,
+					p.CurrToken.EndPos))
+			}
+
+			args = append(args, p.CurrToken.Value.(string))
+
+			pr.Register(p.Advance())
+		}
+	}
+
+	if p.CurrToken.Type == TTOp && p.CurrToken.Value == ")" {
+		pr.Register(p.Advance())
+
+		if p.CurrToken.Type == TTOp && p.CurrToken.Value == "=" {			
+			pr.Register(p.Advance())
+	
+			body := pr.Register(p.Exp())
+	
+			if pr.Error != nil {
+				return pr
+			}
+	
+			return pr.Success(NewFunDefNode(name, args, body))
+		}
+
+		// TODO: add { ... } functions
+
+		return pr.Failure(NewInvalidSyntaxError(
+			"Expected '='", p.CurrToken.StartPos, p.CurrToken.EndPos))
+	}
+
+	return pr.Failure(NewInvalidSyntaxError(
+		"Expected identifier or ')'", p.CurrToken.StartPos, p.CurrToken.EndPos))
+}
+
+func (p *Parser) Call() *ParseResult {
+	pr := NewParseResult()
+	atom := pr.Register(p.Atom())
+
+	if pr.Error != nil {
+		return pr
+	}
+
+	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "(" {
+		pr.Register(p.Advance())
+
+		args := []interface{}{}
+
+		if p.CurrToken.Type == TTOp && p.CurrToken.Value == ")" {
+			pr.Register(p.Advance())
+			return pr.Success(NewFunCallNode(atom, args))
+		} else {
+			args = append(args, pr.Register(p.Exp()))
+			if pr.Error != nil {
+				return pr
+			}
+
+			for p.CurrToken.Type == TTOp && p.CurrToken.Value == "," {
+				pr.Register(p.Advance())
+
+				args = append(args, pr.Register(p.Exp()))
+				if pr.Error != nil {
+					return pr
+				}
+			}
+
+			if p.CurrToken.Type != TTOp && p.CurrToken.Value != ")" {
+				return pr.Failure(NewInvalidSyntaxError(
+					"Expected ')'",
+					p.CurrToken.StartPos,
+					p.CurrToken.EndPos))
+			}
+
+			pr.Register(p.Advance())
+
+			return pr.Success(NewFunCallNode(atom, args))
+		}
+	}
+
+	return pr.Success(atom)
+}
+
 func (p *Parser) Atom() *ParseResult {
 	pr := NewParseResult()
 	t := p.CurrToken
@@ -359,6 +479,12 @@ func (p *Parser) Atom() *ParseResult {
 			return pr
 		}
 		return pr.Success(forExp)
+	} else if t.Type == TTKeyword && t.Value == "fun" {
+		funDef := pr.Register(p.FunDef())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(funDef)
 	} else if t.Type == TTOp && t.Value == "?" {
 		pr.Register(p.Advance())
 	}
@@ -370,7 +496,7 @@ func (p *Parser) Atom() *ParseResult {
 }
 
 func (p *Parser) Power() *ParseResult {
-	return p.BinOp(p.Atom, p.Factor, TTOp, []string{"^"})
+	return p.BinOp(p.Call, p.Factor, TTOp, []string{"^"})
 }
 
 func (p *Parser) Factor() *ParseResult {

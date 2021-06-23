@@ -155,7 +155,7 @@ func (n *Number) IsLessThanOrEqual(other interface{}) (Value, *Error) {
 }
 
 func (n *Number) And(other interface{}) (Value, *Error) {
-	if o, ok := other.(*Number); ok {
+	if o, ok := other.(Value); ok {
 		var val float64 = 0
 		if n.IsTrue() && o.IsTrue() {
 			val = 1
@@ -167,7 +167,7 @@ func (n *Number) And(other interface{}) (Value, *Error) {
 }
 
 func (n *Number) Or(other interface{}) (Value, *Error) {
-	if o, ok := other.(*Number); ok {
+	if o, ok := other.(Value); ok {
 		var val float64 = 0
 		if n.IsTrue() || o.IsTrue() {
 			val = 1
@@ -191,4 +191,8 @@ func (n *Number) IsTrue() bool {
 
 func (n *Number) GetVal() interface{} {
 	return n.Value
+}
+
+func (n *Number) Call(args []Value, ctx *Context) (Value, *Error) {
+	return nil, NewRuntimeError("Can't call a number value", n.StartPos, n.EndPos)
 }
