@@ -128,7 +128,7 @@ func (f *Function) GetVal() interface{} {
 	return nil
 }
 
-func (f *Function) Call(args []Value, ctx *Context) (Value, *Error) {
+func (f *Function) Call(args []interface{}, ctx *Context) (Value, *Error) {
 	i := NewInterpretor()
 	newCtx := NewContext(f.Name)
 	newCtx.Parent = ctx
@@ -137,7 +137,7 @@ func (f *Function) Call(args []Value, ctx *Context) (Value, *Error) {
 
 	for key, argVal := range args {
 		argName := f.ArgNames[key]
-		newCtx.SymbolTable.Set(argName, argVal)
+		newCtx.SymbolTable.Set(argName, argVal.(Value))
 	}
 
 	val := i.Visit(f.Body, newCtx)

@@ -177,6 +177,6 @@ func (s *String) GetVal() interface{} {
 	return s.Value
 }
 
-func (n *String) Call(args []Value, ctx *Context) (Value, *Error) {
+func (n *String) Call(args []interface{}, ctx *Context) (Value, *Error) {
 	return nil, NewRuntimeError("Can't call a number value", n.StartPos, n.EndPos)
 }

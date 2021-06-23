@@ -193,6 +193,6 @@ func (n *Number) GetVal() interface{} {
 	return n.Value
 }
 
-func (n *Number) Call(args []Value, ctx *Context) (Value, *Error) {
+func (n *Number) Call(args []interface{}, ctx *Context) (Value, *Error) {
 	return nil, NewRuntimeError("Can't call a number value", n.StartPos, n.EndPos)
 }

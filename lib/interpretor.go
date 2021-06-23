@@ -291,7 +291,7 @@ func (i *Interpretor) VisitFunDefNode(f *FunDefNode, ctx *Context) Value {
 
 func (i *Interpretor) VisitFunCallNode(f *FunCallNode, ctx *Context) (Value, *Error) {
 	fun := i.Visit(f.Name, ctx)
-	args := []Value{}
+	args := []interface{}{}
 
 	for _, val := range f.Args {
 		args = append(args, i.Visit(val, ctx))

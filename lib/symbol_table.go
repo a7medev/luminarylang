@@ -9,7 +9,18 @@ func NewSymbolTable() *SymbolTable {
 	st := &SymbolTable{
 		Symbols: map[string]Value{},
 	}
+	st.Init()
 	return st
+}
+
+func (st *SymbolTable) Init() {
+	st.Set("true", NewNumber(1))
+	st.Set("false", NewNumber(0))
+	
+	st.Set("print", BuiltinPrint)
+	st.Set("println", BuiltinPrintln)
+	st.Set("scan", BuiltinScan)
+	st.Set("exit", BuiltinExit)
 }
 
 func (st *SymbolTable) Get(n string) Value {
