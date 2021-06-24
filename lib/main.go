@@ -38,7 +38,11 @@ func run(t string) {
 	ctx := NewContext("<root>")
 	ctx.SymbolTable = globalSymbolTable
 
-	interp.Visit(ast.Node, ctx)
+	res := interp.Visit(ast.Node, ctx)
+
+	if res.Error != nil {
+		fmt.Println(res.Error)
+	}
 }
 
 func main() {
