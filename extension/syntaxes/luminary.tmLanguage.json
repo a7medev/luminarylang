@@ -14,7 +14,7 @@
       "patterns": [
         {
           "name": "keyword.control.luminary",
-          "match": "\\b(set|and|or|not|if|else|elif|while|for|by|fun)\\b"
+          "match": "\\b(set|and|or|not|if|else|elif|while|for|by|fun|return|break|continue)\\b"
         }
       ]
     },
@@ -111,7 +111,7 @@
       ]
     },
     "constants": {
-      "match": "\\b(?:true|false)\\b",
+      "match": "\\b(?:true|false|null)\\b",
       "name": "variable.language.luminary"
     },
     "comments": {
