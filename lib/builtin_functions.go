@@ -422,3 +422,64 @@ var BuiltinStr = NewBuiltinFunction(
 		return rr.Failure(NewRuntimeError("Expected one argument to be passed to str()", nil, nil))
 	},
 )
+
+var BuiltinMap = NewBuiltinFunction(
+	"map",
+	[]string{"list, fun"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) == 2 {
+			if list, ok := args[0].(*List); ok {
+				if fun, ok := args[1].(Value); ok {
+					newList := []interface{}{}
+
+					for _, val := range list.Elements {
+						ctx := NewContext("map")
+						res := rr.Register(fun.Call([]interface{}{val}, ctx))
+						if rr.ShouldReturn() {
+							return rr
+						}
+						newList = append(newList, res)
+					}
+
+					return rr.Success(NewList(newList))
+				}
+			}
+			return rr.Failure(NewRuntimeError("Expected first argument of map() to be a list and second to be a value", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected 2 arguments to be passed to map()", nil, nil))
+	},
+)
+
+var BuiltinReduce = NewBuiltinFunction(
+	"reduce",
+	[]string{"list, fun, initialValue"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) == 3 {
+			if list, ok := args[0].(*List); ok {
+				if fun, ok := args[1].(Value); ok {
+					if initial, ok := args[2].(Value); ok {
+						accum := initial
+
+						for _, curr := range list.Elements {
+							ctx := NewContext("reduce")
+							accum = rr.Register(fun.Call([]interface{}{accum, curr}, ctx))
+							if rr.ShouldReturn() {
+								return rr
+							}
+						}
+
+						return rr.Success(accum)
+					}
+				}
+			}
+			return rr.Failure(NewRuntimeError("Expected first argument of reduce() to be a list and second to be a value", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected 2 arguments to be passed to reduce()", nil, nil))
+	},
+)
