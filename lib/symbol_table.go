@@ -34,6 +34,7 @@ func (st *SymbolTable) Init() {
 	st.Set("shift", BuiltinShift)
 	st.Set("map", BuiltinMap)
 	st.Set("reduce", BuiltinReduce)
+	st.Set("filter", BuiltinFilter)
 
 	// Strings
 	st.Set("trim", BuiltinTrim)

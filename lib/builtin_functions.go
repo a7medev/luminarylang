@@ -446,7 +446,7 @@ var BuiltinMap = NewBuiltinFunction(
 					return rr.Success(NewList(newList))
 				}
 			}
-			return rr.Failure(NewRuntimeError("Expected first argument of map() to be a list and second to be a value", nil, nil))
+			return rr.Failure(NewRuntimeError("Expected first argument of map() to be a list and second to be a function", nil, nil))
 		}
 
 		return rr.Failure(NewRuntimeError("Expected 2 arguments to be passed to map()", nil, nil))
@@ -477,9 +477,41 @@ var BuiltinReduce = NewBuiltinFunction(
 					}
 				}
 			}
-			return rr.Failure(NewRuntimeError("Expected first argument of reduce() to be a list and second to be a value", nil, nil))
+			return rr.Failure(NewRuntimeError("Expected first argument of reduce() to be a list and second to be a function and third to be a value", nil, nil))
 		}
 
-		return rr.Failure(NewRuntimeError("Expected 2 arguments to be passed to reduce()", nil, nil))
+		return rr.Failure(NewRuntimeError("Expected 3 arguments to be passed to reduce()", nil, nil))
+	},
+)
+
+var BuiltinFilter = NewBuiltinFunction(
+	"filter",
+	[]string{"list, fun"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) == 2 {
+			if list, ok := args[0].(*List); ok {
+				if fun, ok := args[1].(Value); ok {
+					newList := []interface{}{}
+
+					for _, val := range list.Elements {
+						ctx := NewContext("filter")
+						res := rr.Register(fun.Call([]interface{}{val}, ctx))
+						if rr.ShouldReturn() {
+							return rr
+						}
+						if res.IsTrue() {
+							newList = append(newList, res)
+						}
+					}
+
+					return rr.Success(NewList(newList))
+				}
+			}
+			return rr.Failure(NewRuntimeError("Expected first argument of filter() to be a list and second to be a function", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected 2 arguments to be passed to filter()", nil, nil))
 	},
 )
