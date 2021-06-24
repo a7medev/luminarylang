@@ -208,3 +208,8 @@ func (n *Number) Call(args []interface{}, ctx *Context) *RuntimeResult {
 	rr := NewRuntimeResult()
 	return rr.Failure(NewRuntimeError("Can't call a number value", n.StartPos, n.EndPos))
 }
+
+func (n *Number) AccessElement(index int, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+	return rr.Failure(NewRuntimeError("Can't access element from a number", n.StartPos, n.EndPos))
+}

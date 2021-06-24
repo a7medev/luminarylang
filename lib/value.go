@@ -21,4 +21,5 @@ type Value interface {
 	IsTrue() bool
 	GetVal() interface{}
 	Call(args []interface{}, ctx *Context) *RuntimeResult
+	AccessElement(index int, ctx *Context) *RuntimeResult
 }

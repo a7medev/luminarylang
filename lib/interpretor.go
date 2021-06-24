@@ -95,6 +95,8 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) *RuntimeResult {
 		return i.VisitListNode(list, ctx)
 	} else if access, ok := n.(*VarAccessNode); ok {
 		return i.VisitVarAccessNode(access, ctx)
+	} else if elAccess, ok := n.(*ElementAccessNode); ok {
+		return i.VisitElementAccessNode(elAccess, ctx)
 	} else if assign, ok := n.(*VarAssignNode); ok {
 		return i.VisitVarAssignNode(assign, ctx)
 	} else if ifN, ok := n.(*IfNode); ok {
@@ -502,4 +504,23 @@ func (i *Interpretor) VisitListNode(f *ListNode, ctx *Context) *RuntimeResult {
 	}
 
 	return rr.Success(NewList(elements))
+}
+
+func (i *Interpretor) VisitElementAccessNode(a *ElementAccessNode, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+	list := rr.Register(i.Visit(a.Node, ctx))
+	if rr.ShouldReturn() {
+		return rr
+	}
+	index := rr.Register(i.Visit(a.Index, ctx))
+	switch i := index.(type) {
+	case *Number:
+		el := rr.Register(list.AccessElement(int(i.Value), ctx))
+		if rr.ShouldReturn() {
+			return rr
+		}
+		return rr.Success(el)
+	default:
+		return rr.Failure(NewRuntimeError("Expected a number for the index", nil, nil))
+	}
 }

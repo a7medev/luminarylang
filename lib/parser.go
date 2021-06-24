@@ -717,6 +717,29 @@ func (p *Parser) Call() *ParseResult {
 		}
 	}
 
+	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "[" {
+		pr.RegisterAdvance()
+		p.Advance()
+		pr.Register(p.SkipNewLines()) 
+
+		index := pr.Register(p.Exp())
+		if pr.Error != nil {
+			return pr
+		}
+
+		pr.Register(p.SkipNewLines())
+
+		if p.CurrToken.Type != TTOp && p.CurrToken.Value != "]" {
+			return pr.Failure(NewInvalidSyntaxError(
+				"Expected ']'", p.CurrToken.StartPos, p.CurrToken.EndPos))
+		}
+
+		pr.RegisterAdvance()
+		p.Advance()
+		
+		return pr.Success(NewElementAccessNode(atom, index))
+	}
+
 	return pr.Success(atom)
 }
 

@@ -182,3 +182,18 @@ func (n *String) Call(args []interface{}, ctx *Context) *RuntimeResult {
 	rr := NewRuntimeResult()
 	return rr.Failure(NewRuntimeError("Can't call a number value", n.StartPos, n.EndPos))
 }
+
+func (s *String) AccessElement(index int, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+
+	val := s.GetVal().(string)
+	length := len(val)
+
+	if length > index {
+		return rr.Success(NewString(val[index:index + 1]))
+	}
+
+	return rr.Failure(NewRuntimeError(
+		fmt.Sprintf("Index out of range (%v) with length of %v", index, length),
+		s.StartPos, s.EndPos))
+}
