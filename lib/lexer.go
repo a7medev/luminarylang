@@ -6,7 +6,7 @@ import (
 )
 
 const Digits = "0123456789"
-const Letters = "abcdefghijklmnopqrstunwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const Letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const IdAllowedChars = Letters + Digits + "_"
 
 var Keywords = [14]string{"set", "and", "or", "not", "if", "else", "elif", "while", "for", "by", "fun", "return", "break", "continue"}
