@@ -182,8 +182,10 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 	}
 
 	for l.CurrChar != "" {
-		if strings.Contains("\t\n ", l.CurrChar) {
+		if strings.Contains("\t ", l.CurrChar) {
 			l.Advance()
+		} else if strings.Contains("\n;", l.CurrChar) {
+			addToken(NewToken(TTNewLine, l.CurrChar, l.Pos, nil), true)
 		} else if strings.Contains(Letters, l.CurrChar) {
 			addToken(l.MakeId(), false)
 		} else if strings.Contains(Digits, l.CurrChar) {

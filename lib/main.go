@@ -25,7 +25,7 @@ func run(t string) {
 		fmt.Println(err)
 		return
 	}
-	
+
 	parser := NewParser(tokens, -1)
 	ast := parser.Parse()
 	

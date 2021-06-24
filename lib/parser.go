@@ -20,19 +20,45 @@ func NewParser(t []*Token, i int) *Parser {
 type ParseResult struct {
 	Error *Error
 	Node interface{}
+	AdvanceCount int
+	LastAdvanceCount int
+	ToReverseCount int
 }
 
 func NewParseResult() *ParseResult {
-	pr := &ParseResult{}
+	pr := &ParseResult{
+		AdvanceCount: 0,
+		LastAdvanceCount: 0,
+		ToReverseCount: 0,
+	}
 	return pr
 }
 
 func (pr *ParseResult) Register(res interface{}) interface{} {
 	if r, ok := res.(*ParseResult); ok {
+		pr.AdvanceCount += r.AdvanceCount
+		pr.LastAdvanceCount = r.LastAdvanceCount
+
 		if r.Error != nil {
 			pr.Error = r.Error
 		}
 		return r.Node
+	}
+	return res
+}
+
+func (pr *ParseResult) RegisterAdvance() {
+	pr.AdvanceCount += 1
+	pr.LastAdvanceCount = 1
+}
+
+func (pr *ParseResult) TryRegister(res interface{}) interface{} {
+	if r, ok := res.(*ParseResult); ok {
+		if r.Error != nil {
+			pr.ToReverseCount = r.AdvanceCount
+			return nil
+		}
+		return pr.Register(r.Node)
 	}
 	return res
 }
@@ -49,14 +75,24 @@ func (pr *ParseResult) Failure(err *Error) *ParseResult {
 
 func (p *Parser) Advance() *Token {
 	p.TokenIndex += 1
-	if p.TokenIndex < len(p.Tokens) {
-		p.CurrToken = p.Tokens[p.TokenIndex]
-	}
+	p.UpdateToken()
 	return p.CurrToken
 }
 
+func (p *Parser) Reverse(amount int) *Token {
+	p.TokenIndex -= amount
+	p.UpdateToken()
+	return p.CurrToken
+}
+
+func (p *Parser) UpdateToken() {
+	if p.TokenIndex < len(p.Tokens) {
+		p.CurrToken = p.Tokens[p.TokenIndex]
+	}
+}
+
 func (p *Parser) Parse() *ParseResult {
-	pr := p.Exp()
+	pr := p.Statements()
 
 	if pr.Error == nil && p.CurrToken.Type != TTEOF {
 		return pr.Failure(
@@ -67,6 +103,60 @@ func (p *Parser) Parse() *ParseResult {
 	}
 
 	return pr
+}
+
+func (p *Parser) SkipNewLines() *ParseResult {
+	pr := NewParseResult()
+
+	for p.CurrToken.Type == TTNewLine {
+		pr.RegisterAdvance()
+		p.Advance()
+	}
+
+	return pr
+}
+
+func (p *Parser) Statements() *ParseResult {
+	pr := NewParseResult()
+
+	stmts := []interface{}{}
+
+	pr.Register(p.SkipNewLines())
+
+	stmt := pr.Register(p.Exp())
+	if pr.Error != nil {
+		return pr
+	}
+	stmts = append(stmts, stmt)
+
+	more := true
+	for {
+		lines := 0
+
+		for p.CurrToken.Type == TTNewLine {
+			pr.RegisterAdvance()
+			p.Advance()
+			lines += 1
+		}
+
+		if lines == 0 {
+			more = false
+		}
+		
+		if !more {
+			break
+		}
+
+		stmt := pr.TryRegister(p.Exp())
+		if stmt == nil {
+			p.Reverse(pr.ToReverseCount)
+			more = false
+			continue
+		}
+		stmts = append(stmts, stmt)
+	}
+
+	return pr.Success(NewListNode(stmts))
 }
 
 func (p *Parser) IfExp() *ParseResult {
@@ -81,12 +171,17 @@ func (p *Parser) IfExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	cond := pr.Register(p.Exp())
 	if pr.Error != nil {
 		return pr
 	}
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
 		return pr.Failure(
@@ -95,12 +190,17 @@ func (p *Parser) IfExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
 
-	exp := pr.Register(p.Exp())
+	pr.Register(p.SkipNewLines())
+
+	stmts := pr.Register(p.Statements())
 	if pr.Error != nil {
 		return pr
 	}
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
 		return pr.Failure(
@@ -109,17 +209,21 @@ func (p *Parser) IfExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
 
-	cases = append(cases, [2]interface{}{cond, exp})
+	cases = append(cases, [2]interface{}{cond, stmts})
 
 	for p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "elif" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
 		cond := pr.Register(p.Exp())
 		if pr.Error != nil {
 			return pr
 		}
+
+		pr.Register(p.SkipNewLines())
 
 		if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
 			return pr.Failure(
@@ -128,12 +232,15 @@ func (p *Parser) IfExp() *ParseResult {
 				p.CurrToken.EndPos))
 		}
 
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
-		exp := pr.Register(p.Exp())
+		stmts := pr.Register(p.Statements())
 		if pr.Error != nil {
 			return pr
 		}
+
+		pr.Register(p.SkipNewLines())
 
 		if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
 			return pr.Failure(
@@ -142,13 +249,17 @@ func (p *Parser) IfExp() *ParseResult {
 				p.CurrToken.EndPos))
 		}
 
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
-		cases = append(cases, [2]interface{}{cond, exp})
+		cases = append(cases, [2]interface{}{cond, stmts})
 	}
 
 	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "else" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
+
+		pr.Register(p.SkipNewLines())
 
 		if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
 			return pr.Failure(
@@ -157,12 +268,15 @@ func (p *Parser) IfExp() *ParseResult {
 				p.CurrToken.EndPos))
 		}
 
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
-		exp := pr.Register(p.Exp())
+		stmts := pr.Register(p.Statements())
 		if pr.Error != nil {
 			return pr
 		}
+
+		pr.Register(p.SkipNewLines())
 		
 		if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
 			return pr.Failure(
@@ -171,9 +285,10 @@ func (p *Parser) IfExp() *ParseResult {
 				p.CurrToken.EndPos))
 		}
 
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
-		elseCase = exp
+		elseCase = stmts
 	}
 
 	return pr.Success(NewIfNode(cases, elseCase))
@@ -189,9 +304,14 @@ func (p *Parser) WhileExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	cond := pr.Register(p.Exp())
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
 		return pr.Failure(
@@ -200,13 +320,18 @@ func (p *Parser) WhileExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
 
-	exp := pr.Register(p.Exp())
+	pr.Register(p.SkipNewLines())
+
+	stmts := pr.Register(p.Statements())
 
 	if pr.Error != nil {
 		return pr
 	}
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
 		return pr.Failure(
@@ -215,9 +340,10 @@ func (p *Parser) WhileExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
 
-	return pr.Success(NewWhileNode(cond, exp))
+	return pr.Success(NewWhileNode(cond, stmts))
 }
 
 func (p *Parser) ForExp() *ParseResult {
@@ -230,7 +356,10 @@ func (p *Parser) ForExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type != TTId {
 		return pr.Failure(
@@ -241,7 +370,10 @@ func (p *Parser) ForExp() *ParseResult {
 
 	varName := p.CurrToken
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "=" {
 		return pr.Failure(
@@ -250,13 +382,18 @@ func (p *Parser) ForExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	from := pr.Register(p.Exp())
 
 	if pr.Error != nil {
 		return pr
 	}
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != ":" {
 		return pr.Failure(
@@ -265,7 +402,10 @@ func (p *Parser) ForExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	to := pr.Register(p.Exp())
 
@@ -273,17 +413,23 @@ func (p *Parser) ForExp() *ParseResult {
 		return pr
 	}
 
+	pr.Register(p.SkipNewLines())
+
 	var by interface{} = nil
 
 	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "by" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
 		by = pr.Register(p.Exp())
 
 		if pr.Error != nil {
 			return pr
 		}
+
+		pr.Register(p.SkipNewLines())
 	}
+
 
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
 		return pr.Failure(
@@ -292,14 +438,19 @@ func (p *Parser) ForExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
 
-	body := pr.Register(p.Exp())
+	pr.Register(p.SkipNewLines())
+
+	body := pr.Register(p.Statements())
 	
 	if pr.Error != nil {
 		return pr
 	}
 	
+	pr.Register(p.SkipNewLines())
+
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
 		return pr.Failure(
 			NewInvalidSyntaxError("Expected '}'",
@@ -307,7 +458,10 @@ func (p *Parser) ForExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	return pr.Success(NewForNode(varName, from, to, by, body))
 }
@@ -320,7 +474,8 @@ func (p *Parser) FunDef() *ParseResult {
 			"Expected 'fun'", p.CurrToken.StartPos, p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
 
 	name := ""
 	args := []string{}
@@ -328,24 +483,32 @@ func (p *Parser) FunDef() *ParseResult {
 	if p.CurrToken.Type == TTId {
 		name = p.CurrToken.Value.(string)
 
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 	}
-
 
 	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "(" {
 		return pr.Failure(NewInvalidSyntaxError(
 			"Expected identifier or '('", p.CurrToken.StartPos, p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type == TTId {
 		args = append(args, p.CurrToken.Value.(string))
 
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
+
+		pr.Register(p.SkipNewLines())
 
 		for p.CurrToken.Type == TTOp && p.CurrToken.Value == "," {
-			pr.Register(p.Advance())
+			pr.RegisterAdvance()
+			p.Advance()
+			pr.Register(p.SkipNewLines())
 
 			if p.CurrToken.Type != TTId {
 				return pr.Failure(NewInvalidSyntaxError(
@@ -356,22 +519,28 @@ func (p *Parser) FunDef() *ParseResult {
 
 			args = append(args, p.CurrToken.Value.(string))
 
-			pr.Register(p.Advance())
+			pr.RegisterAdvance()
+			p.Advance()
+			pr.Register(p.SkipNewLines())
 		}
 	}
 
 	if p.CurrToken.Type == TTOp && p.CurrToken.Value == ")" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
+		pr.Register(p.SkipNewLines())
 
 		if p.CurrToken.Type == TTOp && p.CurrToken.Value == "=" {			
-			pr.Register(p.Advance())
+			pr.RegisterAdvance()
+			p.Advance()
+			pr.Register(p.SkipNewLines())
 	
 			body := pr.Register(p.Exp())
 	
 			if pr.Error != nil {
 				return pr
 			}
-	
+
 			return pr.Success(NewFunDefNode(name, args, body))
 		}
 
@@ -395,10 +564,14 @@ func (p *Parser) ListExp() *ParseResult {
 			"Expected '['", p.CurrToken.StartPos, p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
 
 	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "]" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 		return pr.Success(NewListNode(el))
 	}
 
@@ -406,14 +579,18 @@ func (p *Parser) ListExp() *ParseResult {
 	if pr.Error != nil {
 		return pr
 	}
+	pr.Register(p.SkipNewLines())
 
 	for p.CurrToken.Type == TTOp && p.CurrToken.Value == "," {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
+		pr.Register(p.SkipNewLines())
 
 		el = append(el, pr.Register(p.Exp()))
 		if pr.Error != nil {
 			return pr
 		}
+		pr.Register(p.SkipNewLines())
 	}
 
 	if p.CurrToken.Type != TTOp && p.CurrToken.Value != "]" {
@@ -423,7 +600,8 @@ func (p *Parser) ListExp() *ParseResult {
 			p.CurrToken.EndPos))
 	}
 
-	pr.Register(p.Advance())
+	pr.RegisterAdvance()
+	p.Advance()
 
 	return pr.Success(NewListNode(el))
 }
@@ -437,26 +615,33 @@ func (p *Parser) Call() *ParseResult {
 	}
 
 	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "(" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
+		pr.Register(p.SkipNewLines())
 
 		args := []interface{}{}
 
 		if p.CurrToken.Type == TTOp && p.CurrToken.Value == ")" {
-			pr.Register(p.Advance())
+			pr.RegisterAdvance()
+			p.Advance()
 			return pr.Success(NewFunCallNode(atom, args))
 		} else {
 			args = append(args, pr.Register(p.Exp()))
 			if pr.Error != nil {
 				return pr
 			}
+			pr.Register(p.SkipNewLines())
 
 			for p.CurrToken.Type == TTOp && p.CurrToken.Value == "," {
-				pr.Register(p.Advance())
+				pr.RegisterAdvance()
+				p.Advance()
+				pr.Register(p.SkipNewLines())
 
 				args = append(args, pr.Register(p.Exp()))
 				if pr.Error != nil {
 					return pr
 				}
+				pr.Register(p.SkipNewLines())
 			}
 
 			if p.CurrToken.Type != TTOp && p.CurrToken.Value != ")" {
@@ -466,7 +651,8 @@ func (p *Parser) Call() *ParseResult {
 					p.CurrToken.EndPos))
 			}
 
-			pr.Register(p.Advance())
+			pr.RegisterAdvance()
+			p.Advance()
 
 			return pr.Success(NewFunCallNode(atom, args))
 		}
@@ -480,13 +666,15 @@ func (p *Parser) Atom() *ParseResult {
 	t := p.CurrToken
 
 	if t.Type == TTOp && t.Value == "(" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 		exp := pr.Register(p.Exp())
 		if pr.Error != nil {
 			return pr
 		}
 		if p.CurrToken.Type == TTOp && p.CurrToken.Value == ")" {
-			pr.Register(p.Advance())
+			pr.RegisterAdvance()
+			p.Advance()
 			return pr.Success(exp)
 		} else {
 			return pr.Failure(
@@ -496,13 +684,16 @@ func (p *Parser) Atom() *ParseResult {
 					p.CurrToken.EndPos))
 		}
 	} else if t.Type == TTNum {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 		return pr.Success(NewNumberNode(t))
 	} else if t.Type == TTStr {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 		return pr.Success(NewStringNode(t))
 	} else if t.Type == TTId {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 		return pr.Success(NewVarAccessNode(t))
 	} else if t.Type == TTOp && t.Value == "[" {
 		list := pr.Register(p.ListExp())
@@ -535,7 +726,8 @@ func (p *Parser) Atom() *ParseResult {
 		}
 		return pr.Success(funDef)
 	} else if t.Type == TTOp && t.Value == "?" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 	}
 
 	return pr.Failure(NewInvalidSyntaxError(
@@ -553,7 +745,8 @@ func (p *Parser) Factor() *ParseResult {
 	t := p.CurrToken
 
 	if t.Type == TTOp && t.Value == "+" || t.Value == "-" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 		fc := pr.Register(p.Factor())
 		if pr.Error != nil {
 			return pr
@@ -572,19 +765,22 @@ func (p *Parser) Exp() *ParseResult {
 	pr := NewParseResult()
 
 	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "set" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
 		varName := p.CurrToken
 
 		if p.CurrToken.Type == TTId {
-			pr.Register(p.Advance())
+			pr.RegisterAdvance()
+			p.Advance()
 			
 			if p.CurrToken.Type != TTOp || p.CurrToken.Value != "=" {
 				return pr.Failure(NewInvalidSyntaxError(
 					"Expected =", p.CurrToken.StartPos, p.CurrToken.EndPos))
 			}
 
-			pr.Register(p.Advance())
+			pr.RegisterAdvance()
+			p.Advance()
 			exp := pr.Register(p.Exp())
 
 			if pr.Error != nil {
@@ -604,7 +800,8 @@ func (p *Parser) Exp() *ParseResult {
 	}
 
 	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "?" {
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
 		left := pr.Register(p.Exp())
 		if pr.Error != nil {
@@ -619,7 +816,8 @@ func (p *Parser) Exp() *ParseResult {
 					p.CurrToken.EndPos))
 		}
 
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 
 		right := pr.Register(p.Exp())
 		if pr.Error != nil {
@@ -644,7 +842,8 @@ func (p *Parser) CompExp() *ParseResult {
 
 	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "not" {
 		op := p.CurrToken
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
 		node := pr.Register(p.CompExp())
 		if pr.Error != nil {
 			return pr
@@ -671,9 +870,14 @@ func (p *Parser) BinOp(rf, lf func() *ParseResult, opType string, ops []string) 
 		return pr
 	}
 
+	pr.Register(p.SkipNewLines())
+
 	for p.CurrToken.Type == opType && Contains(ops, p.CurrToken.Value) {
 		op := p.CurrToken
-		pr.Register(p.Advance())
+		pr.RegisterAdvance()
+		p.Advance()
+		pr.Register(p.SkipNewLines())
+
 		l := pr.Register(lf())
 
 		if pr.Error != nil {
