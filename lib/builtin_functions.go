@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -382,5 +383,42 @@ var BuiltinExit = NewBuiltinFunction(
 			os.Exit(0)
 		}
 		return nil
+	},
+)
+
+var BuiltinNum = NewBuiltinFunction(
+	"num",
+	[]string{"value"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if val, ok := args[0].(*String); ok {
+				num, err := strconv.ParseFloat(val.GetVal().(string), 64)
+				if err != nil {
+					return rr.Failure(NewRuntimeError("num() only converts string numbers into raw numbers", nil, nil))
+				}
+				return rr.Success(NewNumber(num))
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to num()", nil, nil))
+	},
+)
+
+var BuiltinStr = NewBuiltinFunction(
+	"str",
+	[]string{"value"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if val, ok := args[0].(Value); ok {
+				return rr.Success(NewString(val.String()))
+			}
+			return rr.Failure(NewRuntimeError("Expected a value to be passed to str()", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to str()", nil, nil))
 	},
 )

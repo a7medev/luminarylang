@@ -38,6 +38,10 @@ func (st *SymbolTable) Init() {
 	st.Set("replace", BuiltinReplace)
 	st.Set("upper", BuiltinUpper)
 	st.Set("lower", BuiltinLower)
+
+	// Conversion
+	st.Set("num", BuiltinNum)
+	st.Set("str", BuiltinStr)
 }
 
 func (st *SymbolTable) Get(n string) Value {
