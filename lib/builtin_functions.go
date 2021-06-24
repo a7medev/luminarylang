@@ -173,13 +173,11 @@ var BuiltinLen = NewBuiltinFunction(
 	func(args []interface{}) Value {
 		if len(args) > 0 {
 			arg := args[0]
-			if val, ok := arg.(Value); ok {
-				switch raw := val.GetVal().(type) {
-				case string:
-					return NewNumber(float64(len(raw)))
-				case []interface{}:
-					return NewNumber(float64(len(raw)))
-				}
+			switch val := arg.(type) {
+				case *List:
+					return val.Length
+				case *String:
+					return NewNumber(float64(len(val.Value)))
 			}
 
 			err := NewRuntimeError("len() only works for strings or lists", nil, nil)
