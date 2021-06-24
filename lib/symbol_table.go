@@ -17,15 +17,27 @@ func (st *SymbolTable) Init() {
 	st.Set("true", NewNumber(1))
 	st.Set("false", NewNumber(0))
 	
+
+	//* BUILTIN FUNCTIONS
+
+	// Stdin/Stdout/System
 	st.Set("print", BuiltinPrint)
 	st.Set("println", BuiltinPrintln)
 	st.Set("scan", BuiltinScan)
+	st.Set("exit", BuiltinExit)
+
+	// Arrays
 	st.Set("len", BuiltinLen)
 	st.Set("append", BuiltinAppend)
 	st.Set("prepend", BuiltinPrepend)
 	st.Set("pop", BuiltinPop)
 	st.Set("shift", BuiltinShift)
-	st.Set("exit", BuiltinExit)
+
+	// Strings
+	st.Set("trim", BuiltinTrim)
+	st.Set("replace", BuiltinReplace)
+	st.Set("upper", BuiltinUpper)
+	st.Set("lower", BuiltinLower)
 }
 
 func (st *SymbolTable) Get(n string) Value {

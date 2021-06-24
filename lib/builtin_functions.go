@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type BuiltinFunction struct {
@@ -184,6 +185,101 @@ var BuiltinLen = NewBuiltinFunction(
 		}
 
 		err := NewRuntimeError("Expected one argument to be passed to len()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
+
+		return nil
+	},
+)
+
+var BuiltinTrim = NewBuiltinFunction(
+	"trim",
+	[]string{"string"},
+	func(args []interface{}) Value {
+		if len(args) > 0 {
+			arg := args[0]
+			if str, ok := arg.(*String); ok {
+				return NewString(strings.TrimSpace(str.Value))
+			}
+
+			err := NewRuntimeError("trim() only works for strings", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
+		}
+
+		err := NewRuntimeError("Expected one argument to be passed to trim()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
+
+		return nil
+	},
+)
+
+var BuiltinUpper = NewBuiltinFunction(
+	"upper",
+	[]string{"string"},
+	func(args []interface{}) Value {
+		if len(args) > 0 {
+			arg := args[0]
+			if str, ok := arg.(*String); ok {
+				return NewString(strings.ToUpper(str.Value))
+			}
+
+			err := NewRuntimeError("upper() only works for strings", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
+		}
+
+		err := NewRuntimeError("Expected one argument to be passed to upper()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
+
+		return nil
+	},
+)
+
+var BuiltinLower = NewBuiltinFunction(
+	"lower",
+	[]string{"string"},
+	func(args []interface{}) Value {
+		if len(args) > 0 {
+			arg := args[0]
+			if str, ok := arg.(*String); ok {
+				return NewString(strings.ToLower(str.Value))
+			}
+
+			err := NewRuntimeError("lower() only works for strings", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
+		}
+
+		err := NewRuntimeError("Expected one argument to be passed to lower()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
+
+		return nil
+	},
+)
+
+var BuiltinReplace = NewBuiltinFunction(
+	"replace",
+	[]string{"string"},
+	func(args []interface{}) Value {
+		if len(args) == 3 {
+			if str, ok := args[0].(*String); ok {
+				if old, ok := args[1].(*String); ok {
+					if new, ok := args[2].(*String); ok {
+						return NewString(strings.ReplaceAll(str.Value, old.Value, new.Value))
+					}
+				}
+			}
+
+			err := NewRuntimeError("replace() only works for strings", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
+		}
+
+		err := NewRuntimeError("Expected 3 arguments to be passed to replace()", nil, nil)
 		fmt.Println(err)
 		os.Exit(0)
 
