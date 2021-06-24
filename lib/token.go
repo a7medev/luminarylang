@@ -10,6 +10,7 @@ const TTEOF     = "EOF"
 const TTKeyword = "KEYWORD"
 const TTNewLine = "NEWLINE"
 const TTNull    = "NULL"
+const TTComment = "COMMENT"
 
 type Token struct {
 	Type string

@@ -122,6 +122,14 @@ func (l *Lexer) MakeString() (*Token, *Error) {
 	return NewToken(TTStr, str, &startPos, &endPos), nil
 }
 
+func (l *Lexer) SkipComment() {
+	l.Advance()
+	for l.CurrChar != "\n" {
+		l.Advance()
+	}
+	l.Advance()
+}
+
 func (l *Lexer) MakeNotEquals() (*Token, *Error) {
 	startPos := *l.Pos
 
@@ -199,6 +207,8 @@ func (l *Lexer) MakeTokens() ([]*Token, *Error) {
 				return []*Token{}, err
 			}
 			addToken(tok, false)
+		} else if l.CurrChar == "#" {
+			l.SkipComment()
 		} else if strings.Contains(SimpleOps, l.CurrChar) {
 			addToken(NewToken(TTOp, l.CurrChar, l.Pos, nil), true)
 		} else if l.CurrChar == "!" {

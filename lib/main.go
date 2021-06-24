@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func GetInput(prompt string) (string, error) {
@@ -17,13 +18,17 @@ func GetInput(prompt string) (string, error) {
 
 var globalSymbolTable = NewSymbolTable()
 
-func run(t string) {
+func Run(t string) []interface{} {
+	if strings.TrimSpace(t) == "" {
+		return []interface{}{}
+	}
+
 	lexer := NewLexer(t, "<stdin>", "")
 	tokens, err := lexer.MakeTokens()
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return []interface{}{}
 	}
 
 	parser := NewParser(tokens, -1)
@@ -31,7 +36,7 @@ func run(t string) {
 	
 	if ast.Error != nil {
 		fmt.Println(ast.Error)
-		return
+		return []interface{}{}
 	}
 	
 	interp := NewInterpretor()
@@ -42,16 +47,35 @@ func run(t string) {
 
 	if res.Error != nil {
 		fmt.Println(res.Error)
+		return []interface{}{}
 	}
+
+	return res.Value.GetVal().([]interface{})
 }
 
 func main() {
-	for {
-		text, err := GetInput("\033[33mluminary %\033[37m ")
-		if err != nil {
-			fmt.Println(err)
-			break
+	if len(os.Args) < 2 {
+		for {
+			text, err := GetInput("\033[33mLuminary %\033[37m ")
+
+			if err != nil {
+				fmt.Println(err)
+				break
+			}
+
+			res := Run(text)
+			for _, val := range res {
+				fmt.Println(val)
+			}
 		}
-		run(text)
+		return
 	}
+
+	file := os.Args[1]
+	content, err := os.ReadFile(file)
+	if err != nil {
+		fmt.Println("Failed to load file")
+		return
+	}
+	Run(string(content))
 }
