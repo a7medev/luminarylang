@@ -542,12 +542,34 @@ func (p *Parser) FunDef() *ParseResult {
 			}
 
 			return pr.Success(NewFunDefNode(name, args, body))
+		} else if p.CurrToken.Type == TTOp && p.CurrToken.Value == "{" {
+			pr.RegisterAdvance()
+			p.Advance()
+			pr.Register(p.SkipNewLines())
+			
+			stmts := pr.Register(p.Statements())
+
+			if pr.Error != nil {
+				return pr
+			}
+
+			pr.Register(p.SkipNewLines())
+
+			if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
+				return pr.Failure(
+					NewInvalidSyntaxError("Expected '}'",
+					p.CurrToken.StartPos,
+					p.CurrToken.EndPos))
+			}
+
+			pr.RegisterAdvance()
+			p.Advance()
+
+			return pr.Success(NewFunDefNode(name, args, stmts))
 		}
 
-		// TODO: add { ... } functions
-
 		return pr.Failure(NewInvalidSyntaxError(
-			"Expected '='", p.CurrToken.StartPos, p.CurrToken.EndPos))
+			"Expected '{' or '='", p.CurrToken.StartPos, p.CurrToken.EndPos))
 	}
 
 	return pr.Failure(NewInvalidSyntaxError(
