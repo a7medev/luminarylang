@@ -95,11 +95,10 @@ func (f *BuiltinFunction) IsLessThanOrEqual(other interface{}) (Value, *Error) {
 
 func (f *BuiltinFunction) And(other interface{}) (Value, *Error) {
 	if o, ok := other.(Value); ok {
-		var val float64 = 0
 		if o.IsTrue() {
-			val = 1
+			return o, nil
 		}
-		return NewNumber(val), nil
+		return NewNumber(0), nil
 	}
 
 	return nil, NewRuntimeError("Can't compare values of different types", f.StartPos, nil)
@@ -107,11 +106,10 @@ func (f *BuiltinFunction) And(other interface{}) (Value, *Error) {
 
 func (f *BuiltinFunction) Or(other interface{}) (Value, *Error) {
 	if o, ok := other.(Value); ok {
-		var val float64 = 0
 		if o.IsTrue() {
-			val = 1
+			return o, nil
 		}
-		return NewNumber(val), nil
+		return NewNumber(0), nil
 	}
 
 	return nil, NewRuntimeError("Can't compare values of different types", f.StartPos, nil)

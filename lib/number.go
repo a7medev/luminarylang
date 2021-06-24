@@ -166,11 +166,10 @@ func (n *Number) IsLessThanOrEqual(other interface{}) (Value, *Error) {
 
 func (n *Number) And(other interface{}) (Value, *Error) {
 	if o, ok := other.(Value); ok {
-		var val float64 = 0
 		if n.IsTrue() && o.IsTrue() {
-			val = 1
+			return o, nil
 		}
-		return NewNumber(val), nil
+		return NewNumber(0), nil
 	}
 
 	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
@@ -178,11 +177,13 @@ func (n *Number) And(other interface{}) (Value, *Error) {
 
 func (n *Number) Or(other interface{}) (Value, *Error) {
 	if o, ok := other.(Value); ok {
-		var val float64 = 0
-		if n.IsTrue() || o.IsTrue() {
-			val = 1
+		if n.IsTrue() {
+			return n, nil
 		}
-		return NewNumber(val), nil
+		if o.IsTrue() {
+			return o, nil
+		}
+		return NewNumber(0), nil
 	}
 
 	return nil, NewRuntimeError("Can't compare values of different types", n.StartPos, nil)
