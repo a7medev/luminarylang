@@ -122,21 +122,23 @@ func (l *List) GetVal() interface{} {
 	return l.Elements
 }
 
-func (l *List) Call(args []interface{}, ctx *Context) (Value, *Error) {
+func (l *List) Call(args []interface{}, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+
 	if len(args) == 1 {
 		if arg, ok := args[0].(*Number); ok {
 			index := int(arg.Value)
 			length := int(l.Length.GetVal().(float64))
 
 			if length > index {
-				return l.Elements[index].(Value), nil
+				return rr.Success(l.Elements[index].(Value))
 			}
 
-			return nil, NewRuntimeError(
+			return rr.Failure(NewRuntimeError(
 				fmt.Sprintf("Index out of range (%v) with length of %v", index, length),
-				l.StartPos, l.EndPos)
+				l.StartPos, l.EndPos))
 		} else {
-			return nil, NewRuntimeError("Expected a number", l.StartPos, l.EndPos)
+			return rr.Failure(NewRuntimeError("Expected a number", l.StartPos, l.EndPos))
 		}
 	}
 
@@ -148,24 +150,24 @@ func (l *List) Call(args []interface{}, ctx *Context) (Value, *Error) {
 				length := int(l.Length.GetVal().(float64))
 	
 				if length <= start {
-					return nil, NewRuntimeError(
+					return rr.Failure(NewRuntimeError(
 						fmt.Sprintf("Index out of range (%v) with length of %v", start, length),
-						l.StartPos, l.EndPos)
+						l.StartPos, l.EndPos))
 				}
 				if length < end {
-					return nil, NewRuntimeError(
+					return rr.Failure(NewRuntimeError(
 						fmt.Sprintf("Index out of range (%v) with length of %v", end, length),
-						l.StartPos, l.EndPos)	
+						l.StartPos, l.EndPos))	
 				}
 
 				el := l.Elements[start:end]
 
-				return NewList(el), nil
+				return rr.Success(NewList(el))
 			}
 		}
 
-		return nil, NewRuntimeError("Expected a number", l.StartPos, l.EndPos)
+		return rr.Failure(NewRuntimeError("Expected a number", l.StartPos, l.EndPos))
 	}
 
-	return nil, NewRuntimeError("Expected an index or start & end indexes", l.StartPos, l.EndPos)
+	return rr.Failure(NewRuntimeError("Expected an index or start & end indexes", l.StartPos, l.EndPos))
 }

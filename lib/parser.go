@@ -97,7 +97,7 @@ func (p *Parser) Parse() *ParseResult {
 	if pr.Error == nil && p.CurrToken.Type != TTEOF {
 		return pr.Failure(
 			NewInvalidSyntaxError(
-				"Expected '+', '-', '*', '/', '%' or '^'",
+				"Unexpected token",
 				p.CurrToken.StartPos,
 				p.CurrToken.EndPos))
 	}
@@ -123,7 +123,7 @@ func (p *Parser) Statements() *ParseResult {
 
 	pr.Register(p.SkipNewLines())
 
-	stmt := pr.Register(p.Exp())
+	stmt := pr.Register(p.Statement())
 	if pr.Error != nil {
 		return pr
 	}
@@ -131,7 +131,7 @@ func (p *Parser) Statements() *ParseResult {
 
 	more := true
 	for {
-		lines := 0
+		lines := 1
 
 		for p.CurrToken.Type == TTNewLine {
 			pr.RegisterAdvance()
@@ -147,7 +147,7 @@ func (p *Parser) Statements() *ParseResult {
 			break
 		}
 
-		stmt := pr.TryRegister(p.Exp())
+		stmt := pr.TryRegister(p.Statement())
 		if stmt == nil {
 			p.Reverse(pr.ToReverseCount)
 			more = false
@@ -157,6 +157,43 @@ func (p *Parser) Statements() *ParseResult {
 	}
 
 	return pr.Success(NewListNode(stmts))
+}
+
+func (p *Parser) Statement() *ParseResult {
+	pr := NewParseResult()
+
+	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "return" {
+		pr.RegisterAdvance()
+		p.Advance()
+
+		exp := pr.TryRegister(p.Exp())
+
+		if exp == nil {
+			pr.Register(pr.ToReverseCount)
+		}
+
+		return pr.Success(NewReturnNode(exp))
+	}
+
+	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "continue" {
+		pr.RegisterAdvance()
+		p.Advance()
+		return pr.Success(NewContinueNode())
+	}
+
+	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "break" {
+		pr.RegisterAdvance()
+		p.Advance()
+		return pr.Success(NewBreakNode())
+	}
+
+	exp := pr.Register(p.Exp())
+
+	if pr.Error != nil {
+		return pr
+	}
+
+	return pr.Success(exp)
 }
 
 func (p *Parser) IfExp() *ParseResult {
@@ -541,7 +578,7 @@ func (p *Parser) FunDef() *ParseResult {
 				return pr
 			}
 
-			return pr.Success(NewFunDefNode(name, args, body))
+			return pr.Success(NewFunDefNode(name, args, body, true))
 		} else if p.CurrToken.Type == TTOp && p.CurrToken.Value == "{" {
 			pr.RegisterAdvance()
 			p.Advance()
@@ -565,7 +602,7 @@ func (p *Parser) FunDef() *ParseResult {
 			pr.RegisterAdvance()
 			p.Advance()
 
-			return pr.Success(NewFunDefNode(name, args, stmts))
+			return pr.Success(NewFunDefNode(name, args, stmts, false))
 		}
 
 		return pr.Failure(NewInvalidSyntaxError(
@@ -713,6 +750,10 @@ func (p *Parser) Atom() *ParseResult {
 		pr.RegisterAdvance()
 		p.Advance()
 		return pr.Success(NewStringNode(t))
+	} else if t.Type == TTNull {
+		pr.RegisterAdvance()
+		p.Advance()
+		return pr.Success(NewNullNode(t))
 	} else if t.Type == TTId {
 		pr.RegisterAdvance()
 		p.Advance()
@@ -753,7 +794,7 @@ func (p *Parser) Atom() *ParseResult {
 	}
 
 	return pr.Failure(NewInvalidSyntaxError(
-		"Expected int, float, identifier, '+', '-' or '('",
+		"Unexpected token",
 		t.StartPos,
 		t.EndPos))
 }
@@ -851,7 +892,7 @@ func (p *Parser) Exp() *ParseResult {
 
 	if pr.Error != nil {
 		return pr.Failure(NewInvalidSyntaxError(
-			"Expected 'set', number, identifier, '+', '-', '(' or 'not'",
+			"Unexpected token",
 			p.CurrToken.StartPos,
 			p.CurrToken.EndPos))
 	}

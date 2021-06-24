@@ -20,5 +20,5 @@ type Value interface {
 	Not() Value
 	IsTrue() bool
 	GetVal() interface{}
-	Call(args []interface{}, ctx *Context) (Value, *Error)
+	Call(args []interface{}, ctx *Context) *RuntimeResult
 }

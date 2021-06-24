@@ -1,13 +1,16 @@
 package main
 
+import "fmt"
+
 type Function struct {
 	Name string
 	ArgNames []string
 	Body interface{}
+	ReturnBody bool
 	StartPos, EndPos *Position
 }
 
-func NewFunction(n string, a []string, b interface{}) Value {
+func NewFunction(n string, a []string, b interface{}, sh bool) Value {
 	if n == "" {
 		n = "anonymous"
 	}
@@ -16,6 +19,7 @@ func NewFunction(n string, a []string, b interface{}) Value {
 		Name: n,
 		ArgNames: a,
 		Body: b,
+		ReturnBody: sh,
 	}
 
 	return f
@@ -108,7 +112,7 @@ func (f *Function) Or(other interface{}) (Value, *Error) {
 		if o.IsTrue() {
 			return o, nil
 		}
-		return NewNumber(0), nil
+		return f, nil
 	}
 
 	return nil, NewRuntimeError("Can't compare values of different types", f.StartPos, nil)
@@ -126,7 +130,8 @@ func (f *Function) GetVal() interface{} {
 	return nil
 }
 
-func (f *Function) Call(args []interface{}, ctx *Context) (Value, *Error) {
+func (f *Function) Call(args []interface{}, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
 	i := NewInterpretor()
 	newCtx := NewContext(f.Name)
 	newCtx.Parent = ctx
@@ -138,7 +143,24 @@ func (f *Function) Call(args []interface{}, ctx *Context) (Value, *Error) {
 		newCtx.SymbolTable.Set(argName, argVal.(Value))
 	}
 
-	val := i.Visit(f.Body, newCtx)
+	if len(args) != len(f.ArgNames) {
+		return rr.Failure(NewRuntimeError(
+			fmt.Sprintf("Expected %v arguements, got %v", len(f.ArgNames), len(args)), f.StartPos, f.EndPos))
+	}
 
-	return val, nil
+	val := rr.Register(i.Visit(f.Body, newCtx))
+
+	if rr.ShouldReturn() && rr.FunReturnValue == nil {
+		return rr
+	}
+
+	if f.ReturnBody {
+		return rr.Success(val)
+	}
+
+	if rr.FunReturnValue != nil {
+		return rr.Success(rr.FunReturnValue)
+	}
+
+	return rr.Success(NewNull())
 }

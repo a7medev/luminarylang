@@ -9,11 +9,11 @@ import (
 type BuiltinFunction struct {
 	Name string
 	ArgNames []string
-	OnCall func([]interface{}) Value
+	OnCall func([]interface{}) *RuntimeResult
 	StartPos, EndPos *Position
 }
 
-func NewBuiltinFunction(n string, a []string, oc func([]interface{}) Value) Value {
+func NewBuiltinFunction(n string, a []string, oc func([]interface{}) *RuntimeResult) Value {
 	f := &BuiltinFunction{
 		Name: n,
 		ArgNames: a,
@@ -128,210 +128,196 @@ func (f *BuiltinFunction) GetVal() interface{} {
 	return nil
 }
 
-func (f *BuiltinFunction) Call(args []interface{}, ctx *Context) (Value, *Error) {
-	val := f.OnCall(args)
-	return val, nil
+func (f *BuiltinFunction) Call(args []interface{}, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+	val := rr.Register(f.OnCall(args))
+	if rr.ShouldReturn() {
+		return rr
+	}
+	return rr.Success(val)
 }
 
 var BuiltinPrint = NewBuiltinFunction(
 	"print",
 	[]string{"...values"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
 		fmt.Print(args...)
-		return nil
+		return rr.Success(NewNull())
 	},
 )
 
 var BuiltinPrintln = NewBuiltinFunction(
 	"println",
 	[]string{"...values"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
 		fmt.Println(args...)
-		return nil
+		return rr.Success(NewNull())
 	},
 )
 
 var BuiltinScan = NewBuiltinFunction(
 	"scan",
 	[]string{"prompt"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		prompt := "> "
 		if len(args) > 0 {
 			prompt = args[0].(*String).GetVal().(string)
 		}
 
-		text, _ := GetInput(prompt)
+		text, err := GetInput(prompt)
 
-		return NewString(text)
+		if err != nil {
+			return rr.Failure(NewRuntimeError("Failed to get scan from the stdin", nil, nil))
+		}
+
+		return rr.Success(NewString(text))
 	},
 )
 
 var BuiltinLen = NewBuiltinFunction(
 	"len",
 	[]string{"list|string"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) > 0 {
 			arg := args[0]
 			switch val := arg.(type) {
 				case *List:
-					return val.Length
+					return rr.Success(val.Length)
 				case *String:
-					return NewNumber(float64(len(val.Value)))
+					return rr.Success(NewNumber(float64(len(val.Value))))
 			}
 
-			err := NewRuntimeError("len() only works for strings or lists", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			return rr.Failure(NewRuntimeError("len() only works for strings or lists", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected one argument to be passed to len()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
-
-		return nil
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to len()", nil, nil))
 	},
 )
 
 var BuiltinTrim = NewBuiltinFunction(
 	"trim",
 	[]string{"string"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) > 0 {
 			arg := args[0]
 			if str, ok := arg.(*String); ok {
-				return NewString(strings.TrimSpace(str.Value))
+				return rr.Success(NewString(strings.TrimSpace(str.Value)))
 			}
 
-			err := NewRuntimeError("trim() only works for strings", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			return rr.Failure(NewRuntimeError("trim() only works for strings", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected one argument to be passed to trim()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
-
-		return nil
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to trim()", nil, nil))
 	},
 )
 
 var BuiltinUpper = NewBuiltinFunction(
 	"upper",
 	[]string{"string"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) > 0 {
 			arg := args[0]
 			if str, ok := arg.(*String); ok {
-				return NewString(strings.ToUpper(str.Value))
+				return rr.Success(NewString(strings.ToUpper(str.Value)))
 			}
 
-			err := NewRuntimeError("upper() only works for strings", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			rr.Failure(NewRuntimeError("upper() only works for strings", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected one argument to be passed to upper()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
-
-		return nil
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to upper()", nil, nil))
 	},
 )
 
 var BuiltinLower = NewBuiltinFunction(
 	"lower",
 	[]string{"string"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) > 0 {
 			arg := args[0]
 			if str, ok := arg.(*String); ok {
-				return NewString(strings.ToLower(str.Value))
+				return rr.Success(NewString(strings.ToLower(str.Value)))
 			}
 
-			err := NewRuntimeError("lower() only works for strings", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			return rr.Failure(NewRuntimeError("lower() only works for strings", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected one argument to be passed to lower()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
-
-		return nil
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to lower()", nil, nil))
 	},
 )
 
 var BuiltinReplace = NewBuiltinFunction(
 	"replace",
 	[]string{"string"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) == 3 {
 			if str, ok := args[0].(*String); ok {
 				if old, ok := args[1].(*String); ok {
 					if new, ok := args[2].(*String); ok {
-						return NewString(strings.ReplaceAll(str.Value, old.Value, new.Value))
+						return rr.Success(NewString(strings.ReplaceAll(str.Value, old.Value, new.Value)))
 					}
 				}
 			}
 
-			err := NewRuntimeError("replace() only works for strings", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			return rr.Failure(NewRuntimeError("replace() only works for strings", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected 3 arguments to be passed to replace()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
-
-		return nil
+		return rr.Failure(NewRuntimeError("Expected 3 arguments to be passed to replace()", nil, nil))
 	},
 )
 
 var BuiltinAppend = NewBuiltinFunction(
 	"append",
 	[]string{"list", "...elements"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) > 1 {
 			arg := args[0]
 			newEl := args[1:]
 			if list, ok := arg.(*List); ok {
 				el := append(list.Elements, newEl...)
-				return NewList(el)
+				return rr.Success(NewList(el))
 			}
 
-			err := NewRuntimeError("append() only works for lists", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			return rr.Failure(NewRuntimeError("append() only works for lists", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected at least 2 argument to be passed to append()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
-
-		return nil
+		return rr.Failure(NewRuntimeError("Expected at least 2 argument to be passed to append()", nil, nil))
 	},
 )
 
 var BuiltinPrepend = NewBuiltinFunction(
 	"prepend",
 	[]string{"list", "...elements"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) > 1 {
 			arg := args[0]
 			newEl := args[1:]
 			if list, ok := arg.(*List); ok {
 				el := append(newEl, list.Elements...)
-				return NewList(el)
+				return rr.Success(NewList(el))
 			}
 
-			err := NewRuntimeError("prepend() only works for lists", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			rr.Failure(NewRuntimeError("prepend() only works for lists", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected at least 2 argument to be passed to prepend()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
+		rr.Failure(NewRuntimeError("Expected at least 2 argument to be passed to prepend()", nil, nil))
 
 		return nil
 	},
@@ -340,21 +326,19 @@ var BuiltinPrepend = NewBuiltinFunction(
 var BuiltinShift = NewBuiltinFunction(
 	"shift",
 	[]string{"list"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) > 0 {
 			arg := args[0]
 			if list, ok := arg.(*List); ok {
-				return NewList(list.Elements[1:])
+				return rr.Success(NewList(list.Elements[1:]))
 			}
 
-			err := NewRuntimeError("shift() only works for lists", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			rr.Failure(NewRuntimeError("shift() only works for lists", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected one argument to be passed to shift()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
+		rr.Failure(NewRuntimeError("Expected one argument to be passed to shift()", nil, nil))
 
 		return nil
 	},
@@ -363,21 +347,19 @@ var BuiltinShift = NewBuiltinFunction(
 var BuiltinPop = NewBuiltinFunction(
 	"pop",
 	[]string{"list"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
 		if len(args) > 0 {
 			arg := args[0]
 			if list, ok := arg.(*List); ok {
-				return NewList(list.Elements[:len(list.Elements) - 1])
+				return rr.Success(NewList(list.Elements[:len(list.Elements) - 1]))
 			}
 
-			err := NewRuntimeError("pop() only works for lists", nil, nil)
-			fmt.Println(err)
-			os.Exit(0)
+			rr.Failure(NewRuntimeError("pop() only works for lists", nil, nil))
 		}
 
-		err := NewRuntimeError("Expected one argument to be passed to pop()", nil, nil)
-		fmt.Println(err)
-		os.Exit(0)
+		rr.Failure(NewRuntimeError("Expected one argument to be passed to pop()", nil, nil))
 
 		return nil
 	},
@@ -386,7 +368,7 @@ var BuiltinPop = NewBuiltinFunction(
 var BuiltinExit = NewBuiltinFunction(
 	"exit",
 	[]string{"code"},
-	func(args []interface{}) Value {
+	func(args []interface{}) *RuntimeResult {
 		var code interface{} = 0
 		if len(args) > 0 {
 			code = args[0]

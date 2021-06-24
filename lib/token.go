@@ -9,6 +9,7 @@ const TTId      = "ID"
 const TTEOF     = "EOF"
 const TTKeyword = "KEYWORD"
 const TTNewLine = "NEWLINE"
+const TTNull    = "NULL"
 
 type Token struct {
 	Type string

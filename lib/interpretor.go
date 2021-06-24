@@ -9,7 +9,24 @@ func NewInterpretor() *Interpretor {
 
 type RuntimeResult struct {
 	Value
+	FunReturnValue Value
+	ContinueLoop bool
+	BreakLoop bool
 	Error *Error
+}
+
+func NewRuntimeResult() *RuntimeResult {
+	r := &RuntimeResult{}
+	r.Reset()
+	return r
+}
+
+func (rr *RuntimeResult) Reset() {
+	rr.BreakLoop = false
+	rr.ContinueLoop = false
+	rr.FunReturnValue = nil
+	rr.Error = nil
+	rr.Value = nil
 }
 
 func (rr *RuntimeResult) Register(res interface{}) Value {
@@ -17,6 +34,9 @@ func (rr *RuntimeResult) Register(res interface{}) Value {
 		if r.Error != nil {
 			rr.Error = r.Error
 		}
+		rr.ContinueLoop = r.ContinueLoop
+		rr.FunReturnValue = r.FunReturnValue
+		rr.BreakLoop = r.BreakLoop
 		return r.Value
 	} else if v, ok := res.(Value); ok {
 		return v
@@ -25,18 +45,37 @@ func (rr *RuntimeResult) Register(res interface{}) Value {
 }
 
 func (rr *RuntimeResult) Success(val Value) *RuntimeResult {
+	rr.Reset()
 	rr.Value = val
 	return rr
 }
 
+func (rr *RuntimeResult) SuccessReturn(val Value) *RuntimeResult {
+	rr.Reset()
+	rr.FunReturnValue = val
+	return rr
+}
+
+func (rr *RuntimeResult) SuccessContinue() *RuntimeResult {
+	rr.Reset()
+	rr.ContinueLoop = true
+	return rr
+}
+
+func (rr *RuntimeResult) SuccessBreak() *RuntimeResult {
+	rr.Reset()
+	rr.BreakLoop = true
+	return rr
+}
+
 func (rr *RuntimeResult) Failure(err *Error) *RuntimeResult {
+	rr.Reset()
 	rr.Error = err
 	return rr
 }
 
-func NewRuntimeResult() *RuntimeResult {
-	r := &RuntimeResult{}
-	return r
+func (rr *RuntimeResult) ShouldReturn() bool {
+	return rr.Error != nil || rr.FunReturnValue != nil || rr.ContinueLoop || rr.BreakLoop
 }
 
 func (i *Interpretor) Visit(n interface{}, ctx *Context) *RuntimeResult {
@@ -44,6 +83,8 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) *RuntimeResult {
 		return i.VisitNumberNode(num, ctx)
 	} else if str, ok := n.(*StringNode); ok {
 		return i.VisitStringNode(str, ctx)
+	} else if null, ok := n.(*NullNode); ok {
+		return i.VisitNullNode(null, ctx)
 	} else if tern, ok := n.(*TernOpNode); ok {
 		return i.VisitTernOpNode(tern, ctx)
 	} else if bin, ok := n.(*BinOpNode); ok {
@@ -62,10 +103,16 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) *RuntimeResult {
 		return i.VisitForNode(forN, ctx)
 	} else if while, ok := n.(*WhileNode); ok {
 		return i.VisitWhileNode(while, ctx)
+	} else if contin, ok := n.(*ContinueNode); ok {
+		return i.VisitContinueNode(contin, ctx)
+	} else if brk, ok := n.(*BreakNode); ok {
+		return i.VisitBreakNode(brk, ctx)
 	} else if funDef, ok := n.(*FunDefNode); ok {
 		return i.VisitFunDefNode(funDef, ctx)
 	} else if funCall, ok := n.(*FunCallNode); ok {
 		return i.VisitFunCallNode(funCall, ctx)
+	} else if ret, ok := n.(*ReturnNode); ok {
+		return i.VisitReturnNode(ret, ctx)
 	} else {
 		panic("no visit method for this node")
 	}
@@ -80,6 +127,13 @@ func (i *Interpretor) VisitStringNode(s *StringNode, ctx *Context) *RuntimeResul
 	} else {
 		return rr.Failure(NewRuntimeError("Invalid string node", s.Token.StartPos, s.Token.EndPos))
 	}
+}
+
+func (i *Interpretor) VisitNullNode(s *NullNode, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+
+	str := NewNull().SetPos(s.Token.StartPos, s.Token.EndPos)
+	return rr.Success(str)
 }
 
 func (i *Interpretor) VisitNumberNode(n *NumberNode, ctx *Context) *RuntimeResult {
@@ -97,19 +151,19 @@ func (i *Interpretor) VisitTernOpNode(t *TernOpNode, ctx *Context) *RuntimeResul
 	rr := NewRuntimeResult()
 
 	c := rr.Register(i.Visit(t.Cond, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 
 	if c.IsTrue() {
 		l := rr.Register(i.Visit(t.Left, ctx))
-		if rr.Error != nil {
+		if rr.ShouldReturn() {
 			return rr
 		}
 		return rr.Success(l)
 	}
 	r := rr.Register(i.Visit(t.Right, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 	return rr.Success(r)
@@ -119,11 +173,11 @@ func (i *Interpretor) VisitBinOpNode(b *BinOpNode, ctx *Context) *RuntimeResult 
 	rr := NewRuntimeResult()
 
 	l := rr.Register(i.Visit(b.Right, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 	r := rr.Register(i.Visit(b.Left, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 
@@ -213,7 +267,7 @@ func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode, ctx *Context) *RuntimeRes
 	rr := NewRuntimeResult()
 
 	n := rr.Register(i.Visit(u.Node, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 
@@ -233,7 +287,7 @@ func (i *Interpretor) VisitUnaryOpNode(u *UnaryOpNode, ctx *Context) *RuntimeRes
 func (i *Interpretor) VisitVarAssignNode(va *VarAssignNode, ctx *Context) *RuntimeResult {
 	rr := NewRuntimeResult()
 	num := rr.Register(i.Visit(va.ValueNode, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 	return rr.Success(ctx.SymbolTable.Set(va.NameToken.Value.(string), num))
@@ -246,10 +300,7 @@ func (i *Interpretor) VisitVarAccessNode(va *VarAccessNode, ctx *Context) *Runti
 	val := ctx.SymbolTable.Get(name)
 
 	if val == nil {
-		return rr.Failure(NewRuntimeError(
-			"Undefined variable '" + name + "'",
-			va.NameToken.StartPos,
-			va.NameToken.EndPos))
+		return rr.Success(NewNull())
 	}
 	return rr.Success(val)
 }
@@ -260,14 +311,14 @@ func (i *Interpretor) VisitIfNode(ifN *IfNode, ctx *Context) *RuntimeResult {
 	for _, cs := range ifN.Cases {
 		cond := cs[0]
 		condVal := rr.Register(i.Visit(cond, ctx))
-		if rr.Error != nil {
+		if rr.ShouldReturn() {
 			return rr
 		}
 
 		if condVal.IsTrue() {
 			exp := cs[1]
 			expVal := rr.Register(i.Visit(exp, ctx))
-			if rr.Error != nil {
+			if rr.ShouldReturn() {
 				return rr
 			}
 			return rr.Success(expVal)
@@ -277,7 +328,7 @@ func (i *Interpretor) VisitIfNode(ifN *IfNode, ctx *Context) *RuntimeResult {
 	if ifN.ElseCase != nil {
 		exp := ifN.ElseCase
 		expVal := rr.Register(i.Visit(exp, ctx))
-		if rr.Error != nil {
+		if rr.ShouldReturn() {
 			return rr
 		}
 		return rr.Success(expVal)
@@ -291,7 +342,7 @@ func (i *Interpretor) VisitWhileNode(w *WhileNode, ctx *Context) *RuntimeResult 
 
 	cond := func() *RuntimeResult {
 		val := rr.Register(i.Visit(w.Cond, ctx))
-		if rr.Error != nil {
+		if rr.ShouldReturn() {
 			return rr
 		}
 		return rr.Success(val)
@@ -299,15 +350,21 @@ func (i *Interpretor) VisitWhileNode(w *WhileNode, ctx *Context) *RuntimeResult 
 
 	for {
 		res := cond()
-		if rr.Error != nil {
+		if rr.ShouldReturn() {
 			return rr
 		}
 		if !res.IsTrue() {
 			break
 		}
 		rr.Register(i.Visit(w.Exp, ctx))
-		if rr.Error != nil {
+		if rr.ShouldReturn() && !rr.BreakLoop && !rr.ContinueLoop {
 			return rr
+		}
+		if rr.BreakLoop {
+			break
+		}
+		if rr.ContinueLoop {
+			continue
 		}
 	}
 
@@ -318,12 +375,12 @@ func (i *Interpretor) VisitForNode(f *ForNode, ctx *Context) *RuntimeResult {
 	rr := NewRuntimeResult()
 
 	fromVal := rr.Register(i.Visit(f.From, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 	from := fromVal.GetVal().(float64)
 	toVal := rr.Register(i.Visit(f.To, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 	to := toVal.GetVal().(float64)
@@ -333,7 +390,7 @@ func (i *Interpretor) VisitForNode(f *ForNode, ctx *Context) *RuntimeResult {
 
 	if f.By != nil {
 		byVal = rr.Register(i.Visit(f.By, ctx))
-		if rr.Error != nil {
+		if rr.ShouldReturn() {
 			return rr
 		}
 	}
@@ -353,10 +410,16 @@ func (i *Interpretor) VisitForNode(f *ForNode, ctx *Context) *RuntimeResult {
 			ctx.SymbolTable.Set(varName, NewNumber(from))
 			from += by
 			rr.Register(i.Visit(f.Body, ctx))
-			if rr.Error != nil {
+			if rr.ShouldReturn() && !rr.BreakLoop && !rr.ContinueLoop {
 				return rr
 			}
-			} else {
+			if rr.BreakLoop {
+				break
+			}
+			if rr.ContinueLoop {
+				continue
+			}
+		} else {
 			ctx.SymbolTable.Del(varName)
 			break
 		}
@@ -365,10 +428,20 @@ func (i *Interpretor) VisitForNode(f *ForNode, ctx *Context) *RuntimeResult {
 	return rr
 }
 
+func (i *Interpretor) VisitContinueNode(r *ContinueNode, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+	return rr.SuccessContinue()
+}
+
+func (i *Interpretor) VisitBreakNode(r *BreakNode, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+	return rr.SuccessBreak()
+}
+
 func (i *Interpretor) VisitFunDefNode(f *FunDefNode, ctx *Context) *RuntimeResult {
 	rr := NewRuntimeResult()
 
-	fun := NewFunction(f.Name, f.ArgNames, f.Body)
+	fun := NewFunction(f.Name, f.ArgNames, f.Body, f.ReturnBody)
 
 	if f.Name != "" {
 		ctx.SymbolTable.Set(f.Name, fun)
@@ -381,24 +454,38 @@ func (i *Interpretor) VisitFunCallNode(f *FunCallNode, ctx *Context) *RuntimeRes
 	rr := NewRuntimeResult()
 
 	fun := rr.Register(i.Visit(f.Name, ctx))
-	if rr.Error != nil {
+	if rr.ShouldReturn() {
 		return rr
 	}
 	args := []interface{}{}
 
 	for _, val := range f.Args {
 		item := rr.Register(i.Visit(val, ctx))
-		if rr.Error != nil {
+		if rr.ShouldReturn() {
 			return rr
 		}
 		args = append(args, item)
 	}
 
-	val, err := fun.Call(args, ctx)
-	if err != nil {
-		return rr.Failure(err)
+	val := rr.Register(fun.Call(args, ctx))
+	if rr.ShouldReturn() {
+		return rr
 	}
 	return rr.Success(val)
+}
+
+func (i *Interpretor) VisitReturnNode(r *ReturnNode, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+
+	if r.Value != nil {
+		val := rr.Register(i.Visit(r.Value, ctx))
+		if rr.ShouldReturn() {
+			return rr
+		}
+		return rr.SuccessReturn(val)
+	}
+
+	return rr.SuccessReturn(NewNull())
 }
 
 func (i *Interpretor) VisitListNode(f *ListNode, ctx *Context) *RuntimeResult {
@@ -408,7 +495,7 @@ func (i *Interpretor) VisitListNode(f *ListNode, ctx *Context) *RuntimeResult {
 
 	for _, el := range f.Elements {
 		element := rr.Register(i.Visit(el, ctx))
-		if rr.Error != nil {
+		if rr.ShouldReturn() {
 			return rr
 		}
 		elements = append(elements, element)

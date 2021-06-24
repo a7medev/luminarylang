@@ -24,6 +24,15 @@ func (n *NumberNode) String() string {
 	return n.Token.String()
 }
 
+type NullNode struct {
+	Token *Token
+}
+
+func NewNullNode(t *Token) *NullNode {
+	n := &NullNode{Token: t}
+	return n
+}
+
 type BinOpNode struct {
 	Left interface{}
 	Op *Token
@@ -151,13 +160,15 @@ type FunDefNode struct {
 	Name string
 	ArgNames []string
 	Body interface{}
+	ReturnBody bool
 }
 
-func NewFunDefNode(n string, a []string, b interface{}) *FunDefNode {
+func NewFunDefNode(n string, a []string, b interface{}, sh bool) *FunDefNode {
 	f := &FunDefNode{
 		Name: n,
 		ArgNames: a,
 		Body: b,
+		ReturnBody: sh,
 	}
 
 	return f
@@ -184,4 +195,28 @@ type ListNode struct {
 func NewListNode(el []interface{}) *ListNode {
 	l := &ListNode{Elements: el}
 	return l
+}
+
+type ReturnNode struct {
+	Value interface{}
+}
+
+func NewReturnNode(v interface{}) *ReturnNode {
+	r := &ReturnNode{Value: v}
+	return r
+}
+
+type ContinueNode struct {}
+
+func NewContinueNode() *ContinueNode {
+	r := &ContinueNode{}
+	return r
+}
+
+
+type BreakNode struct {}
+
+func NewBreakNode() *BreakNode {
+	r := &BreakNode{}
+	return r
 }

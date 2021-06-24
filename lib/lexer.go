@@ -9,7 +9,7 @@ const Digits = "0123456789"
 const Letters = "abcdefghijklmnopqrstunwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const IdAllowedChars = Letters + Digits + "_"
 
-var Keywords = [11]string{"set", "and", "or", "not", "if", "else", "elif", "while", "for", "by", "fun"}
+var Keywords = [14]string{"set", "and", "or", "not", "if", "else", "elif", "while", "for", "by", "fun", "return", "break", "continue"}
 
 const SimpleOps = "+-*/%^(){}?:,[]"
 
@@ -52,6 +52,9 @@ func (l *Lexer) MakeId() *Token {
 	endPos := *l.Pos
 	if Contains(Keywords, idStr) {
 		return NewToken(TTKeyword, idStr, &startPos, &endPos)
+	}
+	if idStr == "null" {
+		return NewToken(TTNull, idStr, &startPos, &endPos)
 	}
 	return NewToken(TTId, idStr, &startPos, &endPos)
 }
