@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type List struct {
 	Elements []interface{}
 	Length Value
@@ -123,5 +125,49 @@ func (l *List) GetVal() interface{} {
 }
 
 func (l *List) Call(args []interface{}, ctx *Context) (Value, *Error) {
-	return nil, NewRuntimeError("Can't call a list value", l.StartPos, l.EndPos)
+	if len(args) == 1 {
+		if arg, ok := args[0].(*Number); ok {
+			index := int(arg.Value)
+			length := int(l.Length.GetVal().(float64))
+
+			if length > index {
+				return l.Elements[index].(Value), nil
+			}
+
+			return nil, NewRuntimeError(
+				fmt.Sprintf("Index out of range (%v) with length of %v", index, length),
+				l.StartPos, l.EndPos)
+		} else {
+			return nil, NewRuntimeError("Expected a number", l.StartPos, l.EndPos)
+		}
+	}
+
+	if len(args) == 2 {
+		if startArg, ok := args[0].(*Number); ok {
+			if endArg, ok := args[1].(*Number); ok {
+				start := int(startArg.Value)
+				end := int(endArg.Value)
+				length := int(l.Length.GetVal().(float64))
+	
+				if length <= start {
+					return nil, NewRuntimeError(
+						fmt.Sprintf("Index out of range (%v) with length of %v", start, length),
+						l.StartPos, l.EndPos)
+				}
+				if length < end {
+					return nil, NewRuntimeError(
+						fmt.Sprintf("Index out of range (%v) with length of %v", end, length),
+						l.StartPos, l.EndPos)	
+				}
+
+				el := l.Elements[start:end]
+
+				return NewList(el), nil
+			}
+		}
+
+		return nil, NewRuntimeError("Expected a number", l.StartPos, l.EndPos)
+	}
+
+	return nil, NewRuntimeError("Expected an index or start & end indexes", l.StartPos, l.EndPos)
 }
