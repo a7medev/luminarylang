@@ -152,6 +152,20 @@ var BuiltinPrintln = NewBuiltinFunction(
 	},
 )
 
+var BuiltinScan = NewBuiltinFunction(
+	"scan",
+	[]string{"prompt"},
+	func(args []interface{}) Value {
+		prompt := "> "
+		if len(args) > 0 {
+			prompt = args[0].(*String).GetVal().(string)
+		}
+
+		text, _ := GetInput(prompt)
+
+		return NewString(text)
+	},
+)
 
 var BuiltinLen = NewBuiltinFunction(
 	"len",
@@ -181,18 +195,99 @@ var BuiltinLen = NewBuiltinFunction(
 	},
 )
 
-var BuiltinScan = NewBuiltinFunction(
-	"scan",
-	[]string{"prompt"},
+var BuiltinAppend = NewBuiltinFunction(
+	"append",
+	[]string{"list", "...elements"},
 	func(args []interface{}) Value {
-		prompt := "> "
-		if len(args) > 0 {
-			prompt = args[0].(*String).GetVal().(string)
+		if len(args) > 1 {
+			arg := args[0]
+			newEl := args[1:]
+			if list, ok := arg.(*List); ok {
+				el := append(list.Elements, newEl...)
+				return NewList(el)
+			}
+
+			err := NewRuntimeError("append() only works for lists", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
 		}
 
-		text, _ := GetInput(prompt)
+		err := NewRuntimeError("Expected at least 2 argument to be passed to append()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
 
-		return NewString(text)
+		return nil
+	},
+)
+
+var BuiltinPrepend = NewBuiltinFunction(
+	"prepend",
+	[]string{"list", "...elements"},
+	func(args []interface{}) Value {
+		if len(args) > 1 {
+			arg := args[0]
+			newEl := args[1:]
+			if list, ok := arg.(*List); ok {
+				el := append(newEl, list.Elements...)
+				return NewList(el)
+			}
+
+			err := NewRuntimeError("prepend() only works for lists", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
+		}
+
+		err := NewRuntimeError("Expected at least 2 argument to be passed to prepend()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
+
+		return nil
+	},
+)
+
+var BuiltinShift = NewBuiltinFunction(
+	"shift",
+	[]string{"list"},
+	func(args []interface{}) Value {
+		if len(args) > 0 {
+			arg := args[0]
+			if list, ok := arg.(*List); ok {
+				return NewList(list.Elements[1:])
+			}
+
+			err := NewRuntimeError("shift() only works for lists", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
+		}
+
+		err := NewRuntimeError("Expected one argument to be passed to shift()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
+
+		return nil
+	},
+)
+
+var BuiltinPop = NewBuiltinFunction(
+	"pop",
+	[]string{"list"},
+	func(args []interface{}) Value {
+		if len(args) > 0 {
+			arg := args[0]
+			if list, ok := arg.(*List); ok {
+				return NewList(list.Elements[:len(list.Elements) - 1])
+			}
+
+			err := NewRuntimeError("pop() only works for lists", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
+		}
+
+		err := NewRuntimeError("Expected one argument to be passed to pop()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
+
+		return nil
 	},
 )
 

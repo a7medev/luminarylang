@@ -21,6 +21,10 @@ func (st *SymbolTable) Init() {
 	st.Set("println", BuiltinPrintln)
 	st.Set("scan", BuiltinScan)
 	st.Set("len", BuiltinLen)
+	st.Set("append", BuiltinAppend)
+	st.Set("prepend", BuiltinPrepend)
+	st.Set("pop", BuiltinPop)
+	st.Set("shift", BuiltinShift)
 	st.Set("exit", BuiltinExit)
 }
 
