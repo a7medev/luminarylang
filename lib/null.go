@@ -110,7 +110,7 @@ func (n *Null) Call(args []interface{}, ctx *Context) *RuntimeResult {
 	return rr.Failure(NewRuntimeError("Can't call null values", n.StartPos, n.EndPos))
 }
 
-func (n *Null) AccessElement(index int, ctx *Context) *RuntimeResult {
+func (n *Null) AccessElement(index int, to interface{}, ctx *Context) *RuntimeResult {
 	rr := NewRuntimeResult()
 	return rr.Failure(NewRuntimeError("Can't access element from a null value", n.StartPos, n.EndPos))
 }

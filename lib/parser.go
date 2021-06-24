@@ -723,11 +723,26 @@ func (p *Parser) Call() *ParseResult {
 		pr.Register(p.SkipNewLines()) 
 
 		index := pr.Register(p.Exp())
+		var to interface{} = nil
 		if pr.Error != nil {
 			return pr
 		}
 
 		pr.Register(p.SkipNewLines())
+
+		if p.CurrToken.Type == TTOp && p.CurrToken.Value == ":" {
+			pr.RegisterAdvance()
+			p.Advance()
+
+			pr.Register(p.SkipNewLines())
+
+			to = pr.TryRegister(p.Exp())
+			if to == nil {
+				p.Reverse(pr.ToReverseCount)
+			}
+
+			pr.Register(p.SkipNewLines())
+		}
 
 		if p.CurrToken.Type != TTOp && p.CurrToken.Value != "]" {
 			return pr.Failure(NewInvalidSyntaxError(
@@ -736,8 +751,8 @@ func (p *Parser) Call() *ParseResult {
 
 		pr.RegisterAdvance()
 		p.Advance()
-		
-		return pr.Success(NewElementAccessNode(atom, index))
+
+		return pr.Success(NewElementAccessNode(atom, index, to))
 	}
 
 	return pr.Success(atom)

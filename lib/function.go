@@ -165,7 +165,7 @@ func (f *Function) Call(args []interface{}, ctx *Context) *RuntimeResult {
 	return rr.Success(NewNull())
 }
 
-func (f *Function) AccessElement(index int, ctx *Context) *RuntimeResult {
+func (f *Function) AccessElement(index int, to interface{}, ctx *Context) *RuntimeResult {
 	rr := NewRuntimeResult()
 	return rr.Failure(NewRuntimeError("Can't access element from a function", f.StartPos, f.EndPos))
 }

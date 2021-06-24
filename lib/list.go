@@ -127,15 +127,28 @@ func (l *List) Call(args []interface{}, ctx *Context) *RuntimeResult {
 	return rr.Failure(NewRuntimeError("Can't call a list value", l.StartPos, l.EndPos))
 }
 
-func (l *List) AccessElement(index int, ctx *Context) *RuntimeResult {
+func (l *List) AccessElement(index int, to interface{}, ctx *Context) *RuntimeResult {
 	rr := NewRuntimeResult()
 
 	length := int(l.Length.GetVal().(float64))
 
+	if t, ok := to.(int); ok {
+		if length > index {
+			if length >= t {
+				return rr.Success(NewList(l.Elements[index:t]))
+			}
+			return rr.Failure(NewRuntimeError(
+				fmt.Sprintf("Index out of range (%v) with length of %v", t, length),
+				l.StartPos, l.EndPos))
+		}
+		return rr.Failure(NewRuntimeError(
+			fmt.Sprintf("Index out of range (%v) with length of %v", index, length),
+			l.StartPos, l.EndPos))
+	}
+
 	if length > index {
 		return rr.Success(l.Elements[index].(Value))
 	}
-
 	return rr.Failure(NewRuntimeError(
 		fmt.Sprintf("Index out of range (%v) with length of %v", index, length),
 		l.StartPos, l.EndPos))

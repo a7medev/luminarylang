@@ -513,14 +513,30 @@ func (i *Interpretor) VisitElementAccessNode(a *ElementAccessNode, ctx *Context)
 		return rr
 	}
 	index := rr.Register(i.Visit(a.Index, ctx))
-	switch i := index.(type) {
-	case *Number:
-		el := rr.Register(list.AccessElement(int(i.Value), ctx))
+	if rr.ShouldReturn() {
+		return rr
+	}
+	if idx, ok := index.(*Number); ok {
+		if a.To != nil {
+			to := rr.Register(i.Visit(a.To, ctx))
+			if rr.ShouldReturn() {
+				return rr
+			}
+		
+			if t, ok := to.(*Number); ok {
+				res := rr.Register(list.AccessElement(int(idx.Value), int(t.Value), ctx))
+				if rr.ShouldReturn() {
+					return rr
+				}
+				return rr.Success(res)
+			}
+			return rr.Failure(NewRuntimeError("Expected a number for the to-index", nil, nil))
+		}
+		res := rr.Register(list.AccessElement(int(idx.Value), nil, ctx))
 		if rr.ShouldReturn() {
 			return rr
 		}
-		return rr.Success(el)
-	default:
-		return rr.Failure(NewRuntimeError("Expected a number for the index", nil, nil))
+		return rr.Success(res)
 	}
+	return rr.Failure(NewRuntimeError("Expected a number for the index", nil, nil))
 }

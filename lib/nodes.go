@@ -224,12 +224,14 @@ func NewBreakNode() *BreakNode {
 type ElementAccessNode struct {
 	Node interface{}
 	Index interface{}
+	To interface{}
 }
 
-func NewElementAccessNode(n, i interface{}) *ElementAccessNode {
+func NewElementAccessNode(n, i, t interface{}) *ElementAccessNode {
 	e := &ElementAccessNode{
 		Node: n,
 		Index: i,
+		To: t,
 	}
 	return e
 }
