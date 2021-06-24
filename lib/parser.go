@@ -385,6 +385,49 @@ func (p *Parser) FunDef() *ParseResult {
 		"Expected identifier or ')'", p.CurrToken.StartPos, p.CurrToken.EndPos))
 }
 
+func (p *Parser) ListExp() *ParseResult {
+	pr := NewParseResult()
+
+	el := []interface{}{}
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "[" {
+		return pr.Failure(NewInvalidSyntaxError(
+			"Expected '['", p.CurrToken.StartPos, p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "]" {
+		pr.Register(p.Advance())
+		return pr.Success(NewListNode(el))
+	}
+
+	el = append(el, pr.Register(p.Exp()))
+	if pr.Error != nil {
+		return pr
+	}
+
+	for p.CurrToken.Type == TTOp && p.CurrToken.Value == "," {
+		pr.Register(p.Advance())
+
+		el = append(el, pr.Register(p.Exp()))
+		if pr.Error != nil {
+			return pr
+		}
+	}
+
+	if p.CurrToken.Type != TTOp && p.CurrToken.Value != "]" {
+		return pr.Failure(NewInvalidSyntaxError(
+			"Expected ']'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.Register(p.Advance())
+
+	return pr.Success(NewListNode(el))
+}
+
 func (p *Parser) Call() *ParseResult {
 	pr := NewParseResult()
 	atom := pr.Register(p.Atom())
@@ -461,6 +504,12 @@ func (p *Parser) Atom() *ParseResult {
 	} else if t.Type == TTId {
 		pr.Register(p.Advance())
 		return pr.Success(NewVarAccessNode(t))
+	} else if t.Type == TTOp && t.Value == "[" {
+		list := pr.Register(p.ListExp())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(list)
 	} else if t.Type == TTKeyword && t.Value == "if" {
 		ifExp := pr.Register(p.IfExp())
 		if pr.Error != nil {

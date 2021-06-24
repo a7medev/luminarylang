@@ -3,28 +3,10 @@
   "name": "Luminary",
   "patterns": [
     {
-      "include": "#keywords"
+      "include": "#expressions"
     },
     {
-      "include": "#strings"
-    },
-    {
-      "include": "#constants"
-    },
-    {
-      "include": "#comments"
-    },
-    {
-      "include": "#operators"
-    },
-    {
-      "include": "#numbers"
-    },
-    {
-      "include": "#function-call"
-    },
-    {
-      "include": "#variables"
+      "include": "lists"
     }
   ],
   "repository": {
@@ -59,6 +41,13 @@
       },
       "patterns": [
         {
+          "include": "#expressions"
+        }
+      ]
+    },
+    "expressions": {
+      "patterns": [
+        {
           "include": "#keywords"
         },
         {
@@ -81,6 +70,32 @@
         },
         {
           "include": "#variables"
+        },
+        {
+          "include": "#lists"
+        }
+      ]
+    },
+    "lists": {
+      "name": "meta.array.literal.luminary",
+      "begin": "\\s*(\\[)",
+      "beginCaptures": {
+        "1": {
+          "name": "meta.brace.square.luminary"
+        }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": {
+          "name": "meta.brace.square.luminary"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expressions"
+        },
+        {
+          "include": "#punctuation-comma"
         }
       ]
     },

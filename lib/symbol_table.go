@@ -20,6 +20,7 @@ func (st *SymbolTable) Init() {
 	st.Set("print", BuiltinPrint)
 	st.Set("println", BuiltinPrintln)
 	st.Set("scan", BuiltinScan)
+	st.Set("len", BuiltinLen)
 	st.Set("exit", BuiltinExit)
 }
 

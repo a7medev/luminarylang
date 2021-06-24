@@ -152,6 +152,35 @@ var BuiltinPrintln = NewBuiltinFunction(
 	},
 )
 
+
+var BuiltinLen = NewBuiltinFunction(
+	"len",
+	[]string{"list|string"},
+	func(args []interface{}) Value {
+		if len(args) > 0 {
+			arg := args[0]
+			if val, ok := arg.(Value); ok {
+				switch raw := val.GetVal().(type) {
+				case string:
+					return NewNumber(float64(len(raw)))
+				case []interface{}:
+					return NewNumber(float64(len(raw)))
+				}
+			}
+
+			err := NewRuntimeError("len() only works for strings or lists", nil, nil)
+			fmt.Println(err)
+			os.Exit(0)
+		}
+
+		err := NewRuntimeError("Expected one argument to be passed to len()", nil, nil)
+		fmt.Println(err)
+		os.Exit(0)
+
+		return nil
+	},
+)
+
 var BuiltinScan = NewBuiltinFunction(
 	"scan",
 	[]string{"prompt"},

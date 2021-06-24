@@ -23,6 +23,8 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) Value {
 		return i.VisitBinOpNode(bin, ctx)
 	} else if unary, ok := n.(*UnaryOpNode); ok {
 		return i.VisitUnaryOpNode(unary, ctx)
+	} else if list, ok := n.(*ListNode); ok {
+		return i.VisitListNode(list, ctx)
 	} else if access, ok := n.(*VarAccessNode); ok {
 		val, err := i.VisitVarAccessNode(access, ctx)
 		if err != nil {
@@ -298,4 +300,14 @@ func (i *Interpretor) VisitFunCallNode(f *FunCallNode, ctx *Context) (Value, *Er
 	}
 
 	return fun.Call(args, ctx)
+}
+
+func (i *Interpretor) VisitListNode(f *ListNode, ctx *Context) Value {
+	elements := []interface{}{}
+
+	for _, el := range f.Elements {
+		elements = append(elements, i.Visit(el, ctx))
+	}
+
+	return NewList(elements)
 }

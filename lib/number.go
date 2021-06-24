@@ -32,8 +32,11 @@ func (n *Number) SetPos(sp, ep *Position) Value {
 }
 
 func (n *Number) AddTo(other interface{}) (Value, *Error) {
-	if o, ok := other.(*Number); ok {
+	switch o := other.(type) {
+	case *Number:
 		return NewNumber(n.Value + o.Value), nil
+	case *String:
+		return NewString(fmt.Sprintf("%v%v", n.Value, o.Value)), nil
 	}
 	return nil, NewInvalidSyntaxError("Expected a number", n.StartPos, nil)
 }
@@ -46,8 +49,15 @@ func (n *Number) SubBy(other interface{}) (Value, *Error) {
 }
 
 func (n *Number) MulBy(other interface{}) (Value, *Error) {
-	if o, ok := other.(*Number); ok {
+	switch o := other.(type) {
+	case *Number:
 		return NewNumber(n.Value * o.Value), nil
+	case *String:
+		str := ""
+		for i := .0; i < n.Value; i++ {
+			str += o.Value
+		}
+		return NewString(str), nil
 	}
 	return nil, NewInvalidSyntaxError("Expected a number", n.StartPos, nil)
 }

@@ -176,3 +176,12 @@ func NewFunCallNode(n interface{}, a []interface{}) *FunCallNode {
 
 	return f
 }
+
+type ListNode struct {
+	Elements []interface{}
+}
+
+func NewListNode(el []interface{}) *ListNode {
+	l := &ListNode{Elements: el}
+	return l
+}
