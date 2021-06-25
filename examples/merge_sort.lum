@@ -1,0 +1,49 @@
+###########################################
+## MERGE SORT IMPLEMENTATION IN LUMINARY ##
+###########################################
+
+fun mergeSort(list) {
+  set length = len(list)
+
+  if length == 1 {
+  return list
+  }
+
+  set mid = ceil(length / 2)
+
+  set left = mergeSort(list[0:mid])
+  set right = mergeSort(list[mid:length])
+
+  return merge(left, right)
+}
+
+fun runMergeSort() {
+  set unsorted = [2, 4, 1, 5, 7, 2, 6, 1, 1, 6, 4, 10, 33, 5, 7, 23]
+  println("Unsorted list", unsorted)
+
+  set sorted = mergeSort(unsorted)
+  println("Sorted list", sorted)
+}
+
+fun merge(left, right) {
+  set output = []
+  set i = 0
+  set j = 0
+
+  while i < len(left) and j < len(right) {
+    if left[i] < right[j] {
+      set output = append(output, left[i])
+      set i = i + 1
+    } else {
+      set output = append(output, right[j])
+      set j = j + 1
+    }
+  }
+
+  set output = i < len(left) ? output + left[i:len(left)] : output
+  set output = j < len(right) ? output + right[j:len(right)] : output
+
+  return output
+}
+
+runMergeSort()
