@@ -440,9 +440,9 @@ var BuiltinMap = NewBuiltinFunction(
 				if fun, ok := args[1].(Value); ok {
 					newList := []interface{}{}
 
-					for _, val := range list.Elements {
+					for index, val := range list.Elements {
 						ctx := NewContext("map")
-						res := rr.Register(fun.Call([]interface{}{val}, ctx))
+						res := rr.Register(fun.Call([]interface{}{val, NewNumber(float64(index))}, ctx))
 						if rr.ShouldReturn() {
 							return rr
 						}
@@ -471,9 +471,9 @@ var BuiltinReduce = NewBuiltinFunction(
 					if initial, ok := args[2].(Value); ok {
 						accum := initial
 
-						for _, curr := range list.Elements {
+						for index, curr := range list.Elements {
 							ctx := NewContext("reduce")
-							accum = rr.Register(fun.Call([]interface{}{accum, curr}, ctx))
+							accum = rr.Register(fun.Call([]interface{}{accum, curr, NewNumber(float64(index))}, ctx))
 							if rr.ShouldReturn() {
 								return rr
 							}
@@ -501,9 +501,9 @@ var BuiltinFilter = NewBuiltinFunction(
 				if fun, ok := args[1].(Value); ok {
 					newList := []interface{}{}
 
-					for _, val := range list.Elements {
+					for index, val := range list.Elements {
 						ctx := NewContext("filter")
-						res := rr.Register(fun.Call([]interface{}{val}, ctx))
+						res := rr.Register(fun.Call([]interface{}{val, NewNumber(float64(index))}, ctx))
 						if rr.ShouldReturn() {
 							return rr
 						}
