@@ -1,0 +1,23 @@
+fun fizzBuzz(min, max) {
+  for i = min : max {
+    if not i % 3 {
+      if not i % 5 {
+        println("Fizz Buzz")
+      } else {
+        println("Fizz")
+      }
+    } elif not i % 5 {
+      println("Buzz")
+    } else {
+      println(i)
+    }
+  }
+}
+
+fun runFizzBuzz() {
+  min = num(scan("Min: "))
+  max = num(scan("Max: "))
+  fizzBuzz(min, max)
+}
+
+runFizzBuzz()
