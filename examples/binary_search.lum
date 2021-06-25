@@ -1,0 +1,26 @@
+fun binarySearch(list, left, right, value) {
+  if (right >= left) {
+    mid = left + ceil((right - left) / 2)
+    if (list[mid] == value) {
+      return mid
+    }
+
+    if (list[mid] > value) {
+      return binarySearch(list, left, mid - 1, value)
+    }
+
+    return binarySearch(list, mid + 1, right, value)
+  }
+
+  return -1
+}
+
+fun runBinarySearch() {
+  list = [2, 3, 4, 10, 40]
+  value = 10
+  right = len(list) - 1
+  result = binarySearch(list, 0, right, value)
+  println("Value found at index:", result)
+}
+
+runBinarySearch()
