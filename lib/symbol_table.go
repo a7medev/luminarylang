@@ -42,6 +42,11 @@ func (st *SymbolTable) Init() {
 	st.Set("upper", BuiltinUpper)
 	st.Set("lower", BuiltinLower)
 
+	// Numbers
+	st.Set("floor", BuiltinFloor)
+	st.Set("round", BuiltinRound)
+	st.Set("ceil", BuiltinCeil)
+
 	// Conversion
 	st.Set("num", BuiltinNum)
 	st.Set("str", BuiltinStr)

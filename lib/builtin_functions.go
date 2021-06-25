@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -518,5 +519,53 @@ var BuiltinFilter = NewBuiltinFunction(
 		}
 
 		return rr.Failure(NewRuntimeError("Expected 2 arguments to be passed to filter()", nil, nil))
+	},
+)
+
+var BuiltinFloor = NewBuiltinFunction(
+	"floor",
+	[]string{"num"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if num, ok := args[0].(*Number); ok {
+				return rr.Success(NewNumber(math.Floor(num.Value)))
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected a number to be passed to floor()", nil, nil))
+	},
+)
+
+var BuiltinRound = NewBuiltinFunction(
+	"round",
+	[]string{"num"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if num, ok := args[0].(*Number); ok {
+				return rr.Success(NewNumber(math.Round(num.Value)))
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected a number to be passed to round()", nil, nil))
+	},
+)
+
+var BuiltinCeil = NewBuiltinFunction(
+	"ceil",
+	[]string{"num"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if num, ok := args[0].(*Number); ok {
+				return rr.Success(NewNumber(math.Ceil(num.Value)))
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected a number to be passed to ceil()", nil, nil))
 	},
 )
