@@ -1,3 +1,7 @@
+###########################################
+## QUICK SORT IMPLEMENTATION IN LUMINARY ##
+###########################################
+
 fun partition(list, start, end) {
   pivotValue = list[end]
   pivotIndex = start

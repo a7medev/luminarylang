@@ -1,3 +1,7 @@
+##############################################
+## BINARY SEARCH IMPLEMENTATION IN LUMINARY ##
+##############################################
+
 fun binarySearch(list, left, right, value) {
   if (right >= left) {
     mid = left + ceil((right - left) / 2)

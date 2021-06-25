@@ -1,3 +1,7 @@
+##########################################
+## FIZZ BUZZ IMPLEMENTATION IN LUMINARY ##
+##########################################
+
 fun fizzBuzz(min, max) {
   for i = min : max {
     if not i % 3 {
