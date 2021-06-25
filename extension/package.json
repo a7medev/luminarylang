@@ -1,25 +1,38 @@
 {
-    "name": "luminary",
-    "displayName": "Luminary",
-    "description": "Syntax highlighting for Luminary",
-    "version": "0.0.1",
-    "engines": {
-        "vscode": "^1.57.0"
-    },
-    "categories": [
-        "Programming Languages"
+  "name": "luminary",
+  "displayName": "Luminary",
+  "publisher": "luminary",
+  "description": "Syntax highlighting for Luminary",
+  "repository": {
+    "url": "https://github.com/a7med-mahmoud/luminarylang"
+  },
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.57.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "luminary",
+        "aliases": [
+          "Luminary",
+          "luminary"
+        ],
+        "extensions": [
+          ".lum"
+        ],
+        "configuration": "./language-configuration.json"
+      }
     ],
-    "contributes": {
-        "languages": [{
-            "id": "luminary",
-            "aliases": ["Luminary", "luminary"],
-            "extensions": [".lum"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "luminary",
-            "scopeName": "source.lum",
-            "path": "./syntaxes/luminary.tmLanguage.json"
-        }]
-    }
+    "grammars": [
+      {
+        "language": "luminary",
+        "scopeName": "source.lum",
+        "path": "./syntaxes/luminary.tmLanguage.json"
+      }
+    ]
+  }
 }
