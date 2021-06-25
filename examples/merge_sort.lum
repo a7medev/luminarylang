@@ -17,14 +17,6 @@ fun mergeSort(list) {
   return merge(left, right)
 }
 
-fun runMergeSort() {
-  set unsorted = [2, 4, 1, 5, 7, 2, 6, 1, 1, 6, 4, 10, 33, 5, 7, 23]
-  println("Unsorted list", unsorted)
-
-  set sorted = mergeSort(unsorted)
-  println("Sorted list", sorted)
-}
-
 fun merge(left, right) {
   set output = []
   set i = 0
@@ -49,6 +41,14 @@ fun merge(left, right) {
   }
 
   return output
+}
+
+fun runMergeSort() {
+  set unsorted = [2, 4, 1, 5, 7, 2, 6, 1, 1, 6, 4, 10, 33, 5, 7, 23]
+  println("Unsorted list", unsorted)
+
+  set sorted = mergeSort(unsorted)
+  println("Sorted list", sorted)
 }
 
 runMergeSort()
