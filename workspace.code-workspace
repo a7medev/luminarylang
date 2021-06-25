@@ -1,0 +1,14 @@
+{
+  "folders": [
+	{
+		"path": "lib"
+	},
+	{
+		"path": "extension"
+	},
+	{
+		"path": "examples"
+	}
+],
+  "settings": {}
+}

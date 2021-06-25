@@ -113,6 +113,8 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) *RuntimeResult {
 		return i.VisitFunDefNode(funDef, ctx)
 	} else if funCall, ok := n.(*FunCallNode); ok {
 		return i.VisitFunCallNode(funCall, ctx)
+	} else if assign, ok := n.(*ElementAssignNode); ok {
+		return i.VisitElementAssignNode(assign, ctx)
 	} else if ret, ok := n.(*ReturnNode); ok {
 		return i.VisitReturnNode(ret, ctx)
 	} else {
@@ -539,4 +541,29 @@ func (i *Interpretor) VisitElementAccessNode(a *ElementAccessNode, ctx *Context)
 		return rr.Success(res)
 	}
 	return rr.Failure(NewRuntimeError("Expected a number for the index", nil, nil))
+}
+
+func (i *Interpretor) VisitElementAssignNode(a *ElementAssignNode, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+	list := ctx.SymbolTable.Get(a.NameToken.Value.(string))
+	if l, ok := list.(*List); ok {
+		index := rr.Register(i.Visit(a.Index, ctx))
+		if rr.ShouldReturn() {
+			return rr
+		}
+		val := rr.Register(i.Visit(a.Value, ctx))
+		if rr.ShouldReturn() {
+			return rr
+		}
+		if idx, ok := index.(*Number); ok {
+			l.Elements[int(idx.GetVal().(float64))] = val
+			if rr.ShouldReturn() {
+				return rr
+			}
+			return rr.Success(val)
+		}
+		return rr.Failure(NewRuntimeError("Expected a number for the index", nil, nil))
+	}
+	return rr.Failure(NewRuntimeError("Expected a list to assign it's element value",
+		a.NameToken.StartPos, a.NameToken.EndPos))
 }

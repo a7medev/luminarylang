@@ -9,7 +9,7 @@ const Digits = "0123456789"
 const Letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const IdAllowedChars = Letters + Digits + "_"
 
-var Keywords = [14]string{"set", "and", "or", "not", "if", "else", "elif", "while", "for", "by", "fun", "return", "break", "continue"}
+var Keywords = [13]string{"and", "or", "not", "if", "else", "elif", "while", "for", "by", "fun", "return", "break", "continue"}
 
 const SimpleOps = "+-*/%^(){}?:,[]"
 

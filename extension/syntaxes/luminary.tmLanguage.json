@@ -14,7 +14,7 @@
       "patterns": [
         {
           "name": "keyword.control.luminary",
-          "match": "\\b(set|and|or|not|if|else|elif|while|for|by|fun|return|break|continue)\\b"
+          "match": "\\b(and|or|not|if|else|elif|while|for|by|fun|return|break|continue)\\b"
         }
       ]
     },

@@ -793,9 +793,11 @@ func (p *Parser) Atom() *ParseResult {
 		p.Advance()
 		return pr.Success(NewNullNode(t))
 	} else if t.Type == TTId {
-		pr.RegisterAdvance()
-		p.Advance()
-		return pr.Success(NewVarAccessNode(t))
+		node := pr.Register(p.AccessOrAssign())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(node)
 	} else if t.Type == TTOp && t.Value == "[" {
 		list := pr.Register(p.ListExp())
 		if pr.Error != nil {
@@ -862,24 +864,35 @@ func (p *Parser) Term() *ParseResult {
 	return p.BinOp(p.Factor, p.Factor, TTOp, []string{"*", "/", "%"})
 }
 
-func (p *Parser) Exp() *ParseResult {
+func (p *Parser) AccessOrAssign() *ParseResult {
 	pr := NewParseResult()
 
-	if p.CurrToken.Type == TTKeyword && p.CurrToken.Value == "set" {
+	if p.CurrToken.Type != TTId {
+		return pr.Failure(NewInvalidSyntaxError("Expected identifier",
+			p.CurrToken.StartPos, p.CurrToken.EndPos))
+	}
+
+	name := p.CurrToken
+
+	pr.RegisterAdvance()
+	p.Advance()
+
+	tokenIndex := p.TokenIndex
+	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "[" {
 		pr.RegisterAdvance()
 		p.Advance()
 
-		varName := p.CurrToken
-
-		if p.CurrToken.Type == TTId {
-			pr.RegisterAdvance()
-			p.Advance()
-			
-			if p.CurrToken.Type != TTOp || p.CurrToken.Value != "=" {
-				return pr.Failure(NewInvalidSyntaxError(
-					"Expected =", p.CurrToken.StartPos, p.CurrToken.EndPos))
-			}
-
+		index := pr.Register(p.Exp())
+		if pr.Error != nil {
+			return pr
+		}
+		if p.CurrToken.Type != TTOp && p.CurrToken.Value != "]" {
+			return pr.Failure(NewInvalidSyntaxError(
+				"Expected ']'", p.CurrToken.StartPos, p.CurrToken.EndPos))
+		}
+		pr.RegisterAdvance()
+		p.Advance()
+		if p.CurrToken.Type == TTOp && p.CurrToken.Value == "=" {
 			pr.RegisterAdvance()
 			p.Advance()
 			exp := pr.Register(p.Exp())
@@ -888,11 +901,29 @@ func (p *Parser) Exp() *ParseResult {
 				return pr
 			}
 
-			return pr.Success(NewVarAssignNode(varName, exp))
+			return pr.Success(NewElementAssignNode(name, index, exp))
 		}
-		return pr.Failure(NewInvalidSyntaxError(
-			"Expected identifier", p.CurrToken.StartPos, p.CurrToken.EndPos))
 	}
+
+	if p.CurrToken.Type == TTOp && p.CurrToken.Value == "=" {
+		pr.RegisterAdvance()
+		p.Advance()
+		exp := pr.Register(p.Exp())
+
+		if pr.Error != nil {
+			return pr
+		}
+
+		return pr.Success(NewVarAssignNode(name, exp))
+	}
+
+	p.Reverse(p.TokenIndex - tokenIndex)
+
+	return pr.Success(NewVarAccessNode(name))
+}
+
+func (p *Parser) Exp() *ParseResult {
+	pr := NewParseResult()
 
 	node := pr.Register(p.BinOp(p.CompExp, p.CompExp, TTKeyword, []string{"and", "or"}))
 

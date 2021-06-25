@@ -235,3 +235,18 @@ func NewElementAccessNode(n, i, t interface{}) *ElementAccessNode {
 	}
 	return e
 }
+
+type ElementAssignNode struct {
+	NameToken *Token
+	Index interface{}
+	Value interface{}
+}
+
+func NewElementAssignNode(n *Token, i, v interface{}) *ElementAssignNode {
+	e := &ElementAssignNode{
+		NameToken: n,
+		Index: i,
+		Value: v,
+	}
+	return e
+}
