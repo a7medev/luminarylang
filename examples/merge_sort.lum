@@ -3,51 +3,51 @@
 ###########################################
 
 fun mergeSort(list) {
-  set length = len(list)
+  length = len(list)
 
   if length == 1 {
     return list
   }
 
-  set mid = ceil(length / 2)
+  mid = ceil(length / 2)
 
-  set left = mergeSort(list[0:mid])
-  set right = mergeSort(list[mid:length])
+  left = mergeSort(list[0:mid])
+  right = mergeSort(list[mid:length])
 
   return merge(left, right)
 }
 
 fun merge(left, right) {
-  set output = []
-  set i = 0
-  set j = 0
+  output = []
+  i = 0
+  j = 0
 
   while i < len(left) and j < len(right) {
     if left[i] < right[j] {
-      set output = append(output, left[i])
-      set i = i + 1
+      output = append(output, left[i])
+      i = i + 1
     } else {
-      set output = append(output, right[j])
-      set j = j + 1
+      output = append(output, right[j])
+      j = j + 1
     }
   }
 
   if i < len(left) {
-    set output = output + left[i:len(left)]
+    output = output + left[i:len(left)]
   }
 
   if j < len(right) {
-    set output = output + right[j:len(right)]
+    output = output + right[j:len(right)]
   }
 
   return output
 }
 
 fun runMergeSort() {
-  set unsorted = [2, 4, 1, 5, 7, 2, 6, 1, 1, 6, 4, 10, 33, 5, 7, 23]
+  unsorted = [2, 4, 1, 5, 7, 2, 6, 1, 1, 6, 4, 10, 33, 5, 7, 23]
   println("Unsorted list", unsorted)
 
-  set sorted = mergeSort(unsorted)
+  sorted = mergeSort(unsorted)
   println("Sorted list", sorted)
 }
 
