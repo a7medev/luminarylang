@@ -1,0 +1,41 @@
+fun partition(list, start, end) {
+  pivotValue = list[end]
+  pivotIndex = start
+
+  for i = start : end {
+    if list[i] < pivotValue {
+      temp = list[i]
+      list[i] = list[pivotIndex]
+      list[pivotIndex] = temp
+
+      pivotIndex = pivotIndex + 1
+    }
+  }
+
+  temp = list[pivotIndex]
+  list[pivotIndex] = list[end]
+  list[end] = temp
+
+  return pivotIndex
+}
+
+fun quickSort(list, start, end) {
+  if start >= end {
+    return
+  }
+
+  index = partition(list, start, end)
+  
+  quickSort(list, start, index - 1)
+  quickSort(list, index + 1, end)
+}
+
+fun runQuickSort() {
+  list = [2, 4, 1, 5, 7, 2, 6, 1, 1, 6, 4, 10, 33, 5, 7, 23]
+  println("Unsorted list", list)
+
+  quickSort(list, 0, len(list) - 1)
+  println("Sorted list", list)
+}
+
+runQuickSort()
