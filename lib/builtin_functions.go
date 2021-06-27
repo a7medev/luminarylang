@@ -569,3 +569,71 @@ var BuiltinCeil = NewBuiltinFunction(
 		return rr.Failure(NewRuntimeError("Expected a number to be passed to ceil()", nil, nil))
 	},
 )
+
+var BuiltinMin = NewBuiltinFunction(
+	"min",
+	[]string{"list"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if list, ok := args[0].(*List); ok {
+				els := list.Elements
+				min := els[0].(Value)
+
+				for _, el := range els {
+					if val, ok := el.(Value); ok {
+						isGt, err := min.IsGreaterThan(val)
+						if err != nil {
+							return rr.Failure(err)
+						}
+						if isGt.IsTrue() {
+							min = val
+						}
+					} else {
+						return rr.Failure(NewRuntimeError("Expected a list of values",
+							list.StartPos, list.EndPos))
+					}
+				}
+
+				return rr.Success(min)
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected a list to be passed to min()", nil, nil))
+	},
+)
+
+var BuiltinMax = NewBuiltinFunction(
+	"max",
+	[]string{"list"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if list, ok := args[0].(*List); ok {
+				els := list.Elements
+				max := els[0].(Value)
+
+				for _, el := range els {
+					if val, ok := el.(Value); ok {
+						isLt, err := max.IsLessThan(val)
+						if err != nil {
+							return rr.Failure(err)
+						}
+						if isLt.IsTrue() {
+							max = val
+						}
+					} else {
+						return rr.Failure(NewRuntimeError("Expected a list of values",
+							list.StartPos, list.EndPos))
+					}
+				}
+
+				return rr.Success(max)
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected a list to be passed to max()", nil, nil))
+	},
+)

@@ -26,7 +26,7 @@ func (st *SymbolTable) Init() {
 	st.Set("scan", BuiltinScan)
 	st.Set("exit", BuiltinExit)
 
-	// Arrays
+	// Lists
 	st.Set("len", BuiltinLen)
 	st.Set("append", BuiltinAppend)
 	st.Set("prepend", BuiltinPrepend)
@@ -35,6 +35,8 @@ func (st *SymbolTable) Init() {
 	st.Set("map", BuiltinMap)
 	st.Set("reduce", BuiltinReduce)
 	st.Set("filter", BuiltinFilter)
+	st.Set("min", BuiltinMax)
+	st.Set("max", BuiltinMin)
 
 	// Strings
 	st.Set("trim", BuiltinTrim)
