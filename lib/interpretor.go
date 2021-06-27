@@ -384,54 +384,61 @@ func (i *Interpretor) VisitForNode(f *ForNode, ctx *Context) *RuntimeResult {
 	if rr.ShouldReturn() {
 		return rr
 	}
-	from := fromVal.GetVal().(float64)
-	toVal := rr.Register(i.Visit(f.To, ctx))
-	if rr.ShouldReturn() {
-		return rr
-	}
-	to := toVal.GetVal().(float64)
-	byVal := NewNumber(1)
 
-	varName := f.Var.Value.(string)
-
-	if f.By != nil {
-		byVal = rr.Register(i.Visit(f.By, ctx))
+	if from, ok := fromVal.GetVal().(float64); ok {
+		toVal := rr.Register(i.Visit(f.To, ctx))
 		if rr.ShouldReturn() {
 			return rr
 		}
-	}
+		if to, ok := toVal.GetVal().(float64); ok {
+			byVal := NewNumber(1)
 
-	by := byVal.GetVal().(float64)
+			varName := f.Var.Value.(string)
 
-	cond := func() bool {
-		if by > 0 {
-			return from <= to
-		} else {
-			return from >= to
-		}
-	}
+			if f.By != nil {
+				byVal = rr.Register(i.Visit(f.By, ctx))
+				if rr.ShouldReturn() {
+					return rr
+				}
+			}
 
-	for {
-		if cond() {
-			ctx.SymbolTable.Set(varName, NewNumber(from))
-			from += by
-			rr.Register(i.Visit(f.Body, ctx))
-			if rr.ShouldReturn() && !rr.BreakLoop && !rr.ContinueLoop {
+			if by, ok := byVal.GetVal().(float64); ok {
+				cond := func() bool {
+					if by > 0 {
+						return from <= to
+					} else {
+						return from >= to
+					}
+				}
+
+				for {
+					if cond() {
+						ctx.SymbolTable.Set(varName, NewNumber(from))
+						from += by
+						rr.Register(i.Visit(f.Body, ctx))
+						if rr.ShouldReturn() && !rr.BreakLoop && !rr.ContinueLoop {
+							return rr
+						}
+						if rr.BreakLoop {
+							break
+						}
+						if rr.ContinueLoop {
+							continue
+						}
+					} else {
+						ctx.SymbolTable.Del(varName)
+						break
+					}
+				}
+
 				return rr
 			}
-			if rr.BreakLoop {
-				break
-			}
-			if rr.ContinueLoop {
-				continue
-			}
-		} else {
-			ctx.SymbolTable.Del(varName)
-			break
+			return rr.Failure(NewRuntimeError("Expected a number after 'by'", nil, nil))
 		}
-	}
 
-	return rr
+		return rr.Failure(NewRuntimeError("Expected a number after ':'", nil, nil))
+	}
+	return rr.Failure(NewRuntimeError("Expected a number after '='", nil, nil))
 }
 
 func (i *Interpretor) VisitEachNode(e *EachNode, ctx *Context) *RuntimeResult {
