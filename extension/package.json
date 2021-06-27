@@ -3,10 +3,11 @@
   "displayName": "Luminary",
   "publisher": "luminary",
   "description": "Syntax highlighting for Luminary",
+  "icon": "assets/luminary.png",
   "repository": {
     "url": "https://github.com/a7med-mahmoud/luminarylang"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.57.0"
   },
