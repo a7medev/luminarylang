@@ -503,6 +503,91 @@ func (p *Parser) ForExp() *ParseResult {
 	return pr.Success(NewForNode(varName, from, to, by, body))
 }
 
+func (p *Parser) EachExp() *ParseResult {
+	pr := NewParseResult()
+
+	if p.CurrToken.Type != TTKeyword || p.CurrToken.Value != "each" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected 'each'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
+
+	list := pr.Register(p.Exp())
+	if pr.Error != nil {
+		return pr
+	}
+
+	pr.Register(p.SkipNewLines())
+
+	if p.CurrToken.Type != TTKeyword || p.CurrToken.Value != "as" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected 'as'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.RegisterAdvance()
+	p.Advance()
+
+	if pr.Error != nil {
+		return pr
+	}
+
+	pr.Register(p.SkipNewLines())
+
+	if p.CurrToken.Type != TTId {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected identifier",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	itemName := p.CurrToken
+
+	pr.RegisterAdvance()
+	p.Advance()
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "{" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '{'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
+
+	body := pr.Register(p.Statements())
+	
+	if pr.Error != nil {
+		return pr
+	}
+	
+	pr.Register(p.SkipNewLines())
+
+	if p.CurrToken.Type != TTOp || p.CurrToken.Value != "}" {
+		return pr.Failure(
+			NewInvalidSyntaxError("Expected '}'",
+			p.CurrToken.StartPos,
+			p.CurrToken.EndPos))
+	}
+
+	pr.RegisterAdvance()
+	p.Advance()
+
+	pr.Register(p.SkipNewLines())
+
+	return pr.Success(NewEachNode(list, itemName, body))
+}
+
 func (p *Parser) FunDef() *ParseResult {
 	pr := NewParseResult()
 
@@ -822,6 +907,12 @@ func (p *Parser) Atom() *ParseResult {
 			return pr
 		}
 		return pr.Success(forExp)
+	} else if t.Type == TTKeyword && t.Value == "each" {
+		eachExp := pr.Register(p.EachExp())
+		if pr.Error != nil {
+			return pr
+		}
+		return pr.Success(eachExp)
 	} else if t.Type == TTKeyword && t.Value == "fun" {
 		funDef := pr.Register(p.FunDef())
 		if pr.Error != nil {

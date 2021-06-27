@@ -250,3 +250,18 @@ func NewElementAssignNode(n *Token, i, v interface{}) *ElementAssignNode {
 	}
 	return e
 }
+
+type EachNode struct {
+	List interface{}
+	ItemName *Token
+	Body interface{}
+}
+
+func NewEachNode(l interface{}, i *Token, b interface{}) *EachNode {
+	e := &EachNode{
+		List: l,
+		ItemName: i,
+		Body: b,
+	}
+	return e
+}

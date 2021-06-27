@@ -103,6 +103,8 @@ func (i *Interpretor) Visit(n interface{}, ctx *Context) *RuntimeResult {
 		return i.VisitIfNode(ifN, ctx)
 	} else if forN, ok := n.(*ForNode); ok {
 		return i.VisitForNode(forN, ctx)
+	} else if each, ok := n.(*EachNode); ok {
+		return i.VisitEachNode(each, ctx)
 	} else if while, ok := n.(*WhileNode); ok {
 		return i.VisitWhileNode(while, ctx)
 	} else if contin, ok := n.(*ContinueNode); ok {
@@ -430,6 +432,38 @@ func (i *Interpretor) VisitForNode(f *ForNode, ctx *Context) *RuntimeResult {
 	}
 
 	return rr
+}
+
+func (i *Interpretor) VisitEachNode(e *EachNode, ctx *Context) *RuntimeResult {
+	rr := NewRuntimeResult()
+
+	listVal := rr.Register(i.Visit(e.List, ctx))
+	if rr.ShouldReturn() {
+		return rr
+	}
+	if list, ok := listVal.(*List); ok {
+		itemName := e.ItemName.Value.(string)
+
+		for _, item := range list.Elements {
+			ctx.SymbolTable.Set(itemName, item.(Value))
+
+			rr.Register(i.Visit(e.Body, ctx))
+
+			if rr.ShouldReturn() && !rr.BreakLoop && !rr.ContinueLoop {
+				return rr
+			}
+			if rr.BreakLoop {
+				break
+			}
+			if rr.ContinueLoop {
+				continue
+			}
+		}
+		ctx.SymbolTable.Del(itemName)
+		return rr
+	}
+
+	return rr.Failure(NewRuntimeError("Expected a list in 'each'", nil, nil))
 }
 
 func (i *Interpretor) VisitContinueNode(r *ContinueNode, ctx *Context) *RuntimeResult {
