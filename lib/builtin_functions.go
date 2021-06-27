@@ -144,6 +144,7 @@ func (f *BuiltinFunction) AccessElement(index int, to interface{}, ctx *Context)
 	return rr.Failure(NewRuntimeError("Can't access element from a function", f.StartPos, f.EndPos))
 }
 
+// Stdin/Stdout/System
 var BuiltinPrint = NewBuiltinFunction(
 	"print",
 	[]string{"...values"},
@@ -185,6 +186,28 @@ var BuiltinScan = NewBuiltinFunction(
 	},
 )
 
+var BuiltinExit = NewBuiltinFunction(
+	"exit",
+	[]string{"code"},
+	func(args []interface{}) *RuntimeResult {
+		var code interface{} = 0
+		if len(args) > 0 {
+			code = args[0]
+		}
+		switch c := code.(type) {
+		case *Number:
+			os.Exit(int(c.GetVal().(float64)))
+		case int:
+			os.Exit(c)
+		default:
+			os.Exit(0)
+		}
+		return nil
+	},
+)
+
+
+// Lists
 var BuiltinLen = NewBuiltinFunction(
 	"len",
 	[]string{"list|string"},
@@ -204,85 +227,6 @@ var BuiltinLen = NewBuiltinFunction(
 		}
 
 		return rr.Failure(NewRuntimeError("Expected one argument to be passed to len()", nil, nil))
-	},
-)
-
-var BuiltinTrim = NewBuiltinFunction(
-	"trim",
-	[]string{"string"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) > 0 {
-			arg := args[0]
-			if str, ok := arg.(*String); ok {
-				return rr.Success(NewString(strings.TrimSpace(str.Value)))
-			}
-
-			return rr.Failure(NewRuntimeError("trim() only works for strings", nil, nil))
-		}
-
-		return rr.Failure(NewRuntimeError("Expected one argument to be passed to trim()", nil, nil))
-	},
-)
-
-var BuiltinUpper = NewBuiltinFunction(
-	"upper",
-	[]string{"string"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) > 0 {
-			arg := args[0]
-			if str, ok := arg.(*String); ok {
-				return rr.Success(NewString(strings.ToUpper(str.Value)))
-			}
-
-			rr.Failure(NewRuntimeError("upper() only works for strings", nil, nil))
-		}
-
-		return rr.Failure(NewRuntimeError("Expected one argument to be passed to upper()", nil, nil))
-	},
-)
-
-var BuiltinLower = NewBuiltinFunction(
-	"lower",
-	[]string{"string"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) > 0 {
-			arg := args[0]
-			if str, ok := arg.(*String); ok {
-				return rr.Success(NewString(strings.ToLower(str.Value)))
-			}
-
-			return rr.Failure(NewRuntimeError("lower() only works for strings", nil, nil))
-		}
-
-		return rr.Failure(NewRuntimeError("Expected one argument to be passed to lower()", nil, nil))
-	},
-)
-
-var BuiltinReplace = NewBuiltinFunction(
-	"replace",
-	[]string{"string"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) == 3 {
-			if str, ok := args[0].(*String); ok {
-				if old, ok := args[1].(*String); ok {
-					if new, ok := args[2].(*String); ok {
-						return rr.Success(NewString(strings.ReplaceAll(str.Value, old.Value, new.Value)))
-					}
-				}
-			}
-
-			return rr.Failure(NewRuntimeError("replace() only works for strings", nil, nil))
-		}
-
-		return rr.Failure(NewRuntimeError("Expected 3 arguments to be passed to replace()", nil, nil))
 	},
 )
 
@@ -369,63 +313,6 @@ var BuiltinPop = NewBuiltinFunction(
 		rr.Failure(NewRuntimeError("Expected one argument to be passed to pop()", nil, nil))
 
 		return nil
-	},
-)
-
-var BuiltinExit = NewBuiltinFunction(
-	"exit",
-	[]string{"code"},
-	func(args []interface{}) *RuntimeResult {
-		var code interface{} = 0
-		if len(args) > 0 {
-			code = args[0]
-		}
-		switch c := code.(type) {
-		case *Number:
-			os.Exit(int(c.GetVal().(float64)))
-		case int:
-			os.Exit(c)
-		default:
-			os.Exit(0)
-		}
-		return nil
-	},
-)
-
-var BuiltinNum = NewBuiltinFunction(
-	"num",
-	[]string{"value"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) > 0 {
-			if val, ok := args[0].(*String); ok {
-				num, err := strconv.ParseFloat(val.GetVal().(string), 64)
-				if err != nil {
-					return rr.Failure(NewRuntimeError("num() only converts string numbers into raw numbers", nil, nil))
-				}
-				return rr.Success(NewNumber(num))
-			}
-		}
-
-		return rr.Failure(NewRuntimeError("Expected one argument to be passed to num()", nil, nil))
-	},
-)
-
-var BuiltinStr = NewBuiltinFunction(
-	"str",
-	[]string{"value"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) > 0 {
-			if val, ok := args[0].(Value); ok {
-				return rr.Success(NewString(val.String()))
-			}
-			return rr.Failure(NewRuntimeError("Expected a value to be passed to str()", nil, nil))
-		}
-
-		return rr.Failure(NewRuntimeError("Expected one argument to be passed to str()", nil, nil))
 	},
 )
 
@@ -522,54 +409,6 @@ var BuiltinFilter = NewBuiltinFunction(
 	},
 )
 
-var BuiltinFloor = NewBuiltinFunction(
-	"floor",
-	[]string{"num"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) > 0 {
-			if num, ok := args[0].(*Number); ok {
-				return rr.Success(NewNumber(math.Floor(num.Value)))
-			}
-		}
-
-		return rr.Failure(NewRuntimeError("Expected a number to be passed to floor()", nil, nil))
-	},
-)
-
-var BuiltinRound = NewBuiltinFunction(
-	"round",
-	[]string{"num"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) > 0 {
-			if num, ok := args[0].(*Number); ok {
-				return rr.Success(NewNumber(math.Round(num.Value)))
-			}
-		}
-
-		return rr.Failure(NewRuntimeError("Expected a number to be passed to round()", nil, nil))
-	},
-)
-
-var BuiltinCeil = NewBuiltinFunction(
-	"ceil",
-	[]string{"num"},
-	func(args []interface{}) *RuntimeResult {
-		rr := NewRuntimeResult()
-
-		if len(args) > 0 {
-			if num, ok := args[0].(*Number); ok {
-				return rr.Success(NewNumber(math.Ceil(num.Value)))
-			}
-		}
-
-		return rr.Failure(NewRuntimeError("Expected a number to be passed to ceil()", nil, nil))
-	},
-)
-
 var BuiltinMin = NewBuiltinFunction(
 	"min",
 	[]string{"list"},
@@ -635,5 +474,172 @@ var BuiltinMax = NewBuiltinFunction(
 		}
 
 		return rr.Failure(NewRuntimeError("Expected a list to be passed to max()", nil, nil))
+	},
+)
+
+// Strings
+var BuiltinTrim = NewBuiltinFunction(
+	"trim",
+	[]string{"string"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			arg := args[0]
+			if str, ok := arg.(*String); ok {
+				return rr.Success(NewString(strings.TrimSpace(str.Value)))
+			}
+
+			return rr.Failure(NewRuntimeError("trim() only works for strings", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to trim()", nil, nil))
+	},
+)
+
+var BuiltinUpper = NewBuiltinFunction(
+	"upper",
+	[]string{"string"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			arg := args[0]
+			if str, ok := arg.(*String); ok {
+				return rr.Success(NewString(strings.ToUpper(str.Value)))
+			}
+
+			rr.Failure(NewRuntimeError("upper() only works for strings", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to upper()", nil, nil))
+	},
+)
+
+var BuiltinLower = NewBuiltinFunction(
+	"lower",
+	[]string{"string"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			arg := args[0]
+			if str, ok := arg.(*String); ok {
+				return rr.Success(NewString(strings.ToLower(str.Value)))
+			}
+
+			return rr.Failure(NewRuntimeError("lower() only works for strings", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to lower()", nil, nil))
+	},
+)
+
+var BuiltinReplace = NewBuiltinFunction(
+	"replace",
+	[]string{"string"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) == 3 {
+			if str, ok := args[0].(*String); ok {
+				if old, ok := args[1].(*String); ok {
+					if new, ok := args[2].(*String); ok {
+						return rr.Success(NewString(strings.ReplaceAll(str.Value, old.Value, new.Value)))
+					}
+				}
+			}
+
+			return rr.Failure(NewRuntimeError("replace() only works for strings", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected 3 arguments to be passed to replace()", nil, nil))
+	},
+)
+
+// Numbers
+var BuiltinFloor = NewBuiltinFunction(
+	"floor",
+	[]string{"num"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if num, ok := args[0].(*Number); ok {
+				return rr.Success(NewNumber(math.Floor(num.Value)))
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected a number to be passed to floor()", nil, nil))
+	},
+)
+
+var BuiltinRound = NewBuiltinFunction(
+	"round",
+	[]string{"num"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if num, ok := args[0].(*Number); ok {
+				return rr.Success(NewNumber(math.Round(num.Value)))
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected a number to be passed to round()", nil, nil))
+	},
+)
+
+var BuiltinCeil = NewBuiltinFunction(
+	"ceil",
+	[]string{"num"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if num, ok := args[0].(*Number); ok {
+				return rr.Success(NewNumber(math.Ceil(num.Value)))
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected a number to be passed to ceil()", nil, nil))
+	},
+)
+
+// Conversion
+var BuiltinNum = NewBuiltinFunction(
+	"num",
+	[]string{"value"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if val, ok := args[0].(*String); ok {
+				num, err := strconv.ParseFloat(val.GetVal().(string), 64)
+				if err != nil {
+					return rr.Failure(NewRuntimeError("num() only converts string numbers into raw numbers", nil, nil))
+				}
+				return rr.Success(NewNumber(num))
+			}
+		}
+
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to num()", nil, nil))
+	},
+)
+
+var BuiltinStr = NewBuiltinFunction(
+	"str",
+	[]string{"value"},
+	func(args []interface{}) *RuntimeResult {
+		rr := NewRuntimeResult()
+
+		if len(args) > 0 {
+			if val, ok := args[0].(Value); ok {
+				return rr.Success(NewString(val.String()))
+			}
+			return rr.Failure(NewRuntimeError("Expected a value to be passed to str()", nil, nil))
+		}
+
+		return rr.Failure(NewRuntimeError("Expected one argument to be passed to str()", nil, nil))
 	},
 )
