@@ -58,6 +58,12 @@ func (n *Number) MulBy(other interface{}) (Value, *Error) {
 			str += o.Value
 		}
 		return NewString(str), nil
+	case *List:
+		el := []interface{}{}
+		for i := .0; i < n.Value; i++ {
+			el = append(el, o.Elements...)
+		}
+		return NewList(el), nil
 	}
 	return nil, NewInvalidSyntaxError("Expected a number", n.StartPos, nil)
 }

@@ -49,7 +49,14 @@ func (l *List) SubBy(other interface{}) (Value, *Error) {
 }
 
 func (l *List) MulBy(other interface{}) (Value, *Error) {
-	return nil, NewInvalidSyntaxError("Invalid '*' operation on a list", l.StartPos, l.EndPos)
+	if o, ok := other.(*Number); ok {
+		el := []interface{}{}
+		for i := .0; i < o.Value; i++ {
+			el = append(el, l.Elements...)
+		}
+		return NewList(el), nil
+	}
+	return nil, NewInvalidSyntaxError("Expected a number", l.StartPos, l.EndPos)
 }
 
 func (l *List) DivBy(other interface{}) (Value, *Error) {
